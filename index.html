@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Core Server — Internal Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-950:#050607;
+    --bg-900:#0A0D10;
+    --bg-800:#0F1418;
+    --bg-700:#161C22;
+    --bg-650:#1B222A;
+    --border:#232B33;
+    --border-blue:rgba(54,123,240,0.38);
+    --text-hi:#E6EDEB;
+    --text-mid:#8FA39B;
+    --text-low:#57685F;
+    --teal:#367BF0;
+    --teal-dim:rgba(54,123,240,0.14);
+    --success:#39D97A;
+    --success-dim:rgba(57,217,122,0.14);
+    --amber:#F0B429;
+    --amber-dim:rgba(240,180,41,0.14);
+    --red:#FF4757;
+    --red-dim:rgba(255,71,87,0.14);
+    --blue:#5B93FF;
+    --violet:#8B7CF6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-950);
+    color:var(--text-hi);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.num{font-family:'JetBrains Mono', monospace;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--teal-dim);}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 18% 20%, rgba(54,123,240,0.14), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(57,217,122,0.08), transparent 45%),
+      var(--bg-950);
+    padding:24px;
+  }
+  .login-card{width:100%;max-width:400px;}
+  .term-window{
+    background:var(--bg-900);border:1px solid var(--border-blue);border-radius:6px;
+    overflow:hidden;box-shadow:0 0 50px rgba(54,123,240,0.14);
+  }
+  .term-titlebar{display:flex;align-items:center;gap:7px;padding:10px 12px;background:var(--bg-800);border-bottom:1px solid var(--border);}
+  .term-titlebar .dot{width:10px;height:10px;border-radius:50%;flex:none;}
+  .term-titlebar .dot-r{background:#FF5F57;}
+  .term-titlebar .dot-y{background:#FEBC2E;}
+  .term-titlebar .dot-g{background:#28C840;}
+  .term-title{margin-left:6px;font-size:11.5px;color:var(--text-low);}
+  .term-body{padding:22px 24px 24px;}
+  .ascii-banner{color:var(--teal);font-size:11px;line-height:1.35;margin:0 0 16px;white-space:pre;text-align:center;}
+  .term-line{font-size:12px;color:var(--text-mid);margin-bottom:4px;}
+  .term-line.dim{color:var(--text-low);margin-bottom:18px;}
+  .term-prompt-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:9px;}
+  .term-prompt-row .prompt{color:var(--success);font-size:12.5px;flex:none;width:82px;}
+  .term-prompt-row input{
+    flex:1;background:none;border:none;outline:none;color:var(--text-hi);font-size:13.5px;
+    font-family:inherit;caret-color:var(--success);min-width:0;
+  }
+  .login-btn{
+    width:100%;background:transparent;color:var(--teal);border:1px solid var(--teal);padding:11px;border-radius:4px;
+    font-weight:700;font-size:13.5px;margin-top:18px;letter-spacing:1px;transition:background .15s, color .15s;
+    font-family:inherit;
+  }
+  .login-btn:hover{background:var(--teal);color:#04070C;}
+  .login-note{
+    margin-top:18px;font-size:11px;color:var(--text-low);background:var(--bg-800);
+    border:1px solid var(--border);border-left:2px solid var(--teal);padding:10px 12px;border-radius:3px;line-height:1.6;
+  }
+  .login-note b{color:var(--text-mid);}
+  .login-error{color:var(--red);font-size:12px;margin:6px 0 0;display:none;}
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none;min-height:100vh;}
+  .shell{display:grid;grid-template-columns:236px 1fr;min-height:100vh;}
+  .sidebar{background:var(--bg-900);border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+  .brand .glyph{
+    width:30px;height:30px;border-radius:5px;background:linear-gradient(135deg,var(--teal),#0E1F4A);
+    display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:#EAF1FF;font-size:13px;
+    border:1px solid rgba(54,123,240,0.5);
+  }
+  .brand .name{font-size:14px;font-weight:700;}
+  .brand .sub{font-size:10px;color:var(--text-low);}
+  .nav-group{margin-bottom:4px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:4px;color:var(--text-mid);
+    font-size:13px;margin-bottom:2px;border:1px solid transparent;border-left:2px solid transparent;background:none;width:100%;text-align:left;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .nav-item::before{content:'$';color:var(--text-low);margin-right:-2px;}
+  .nav-item .ic{width:16px;height:16px;flex:none;opacity:0.9;}
+  .nav-item:hover{background:var(--bg-700);color:var(--text-hi);}
+  .nav-item.active{background:var(--teal-dim);color:var(--teal);border-left-color:var(--teal);}
+  .nav-item.active::before{color:var(--teal);}
+  .sidebar-foot{margin-top:auto;padding:12px 8px 4px;font-size:10.5px;color:var(--text-low);display:flex;align-items:center;gap:7px;}
+  .dot-online{width:7px;height:7px;border-radius:50%;background:var(--success);flex:none;box-shadow:0 0 8px var(--success);}
+
+  .main{padding:22px 30px 50px;overflow-x:hidden;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:16px;}
+  .search{
+    flex:1;max-width:440px;background:var(--bg-900);border:1px solid var(--border);border-radius:4px;
+    padding:9px 13px;display:flex;align-items:center;gap:9px;color:var(--success);font-size:13px;
+    transition:border-color .12s;
+  }
+  .search:focus-within{border-color:var(--teal);}
+  .search input{background:none;border:none;outline:none;color:var(--text-hi);font-size:13px;width:100%;font-family:inherit;caret-color:var(--success);}
+  .search input::placeholder{color:var(--text-low);}
+  .topbar-right{display:flex;align-items:center;gap:16px;}
+  .user-chip{display:flex;align-items:center;gap:9px;}
+  .user-chip .av{
+    width:32px;height:32px;border-radius:4px;background:var(--bg-700);border:1px solid var(--border-blue);
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--teal);font-weight:700;
+  }
+  .user-chip .who{line-height:1.25;}
+  .user-chip .who .n{font-size:13px;font-weight:600;}
+  .user-chip .who .r{font-size:10.5px;color:var(--text-low);}
+
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0;}to{opacity:1;}}
+
+  .page-head{margin-bottom:18px;}
+  .page-head h2{font-size:18px;margin:0 0 4px;font-weight:700;}
+  .page-head h2::before{content:'~/ ';color:var(--text-low);font-weight:400;}
+  .page-head p{margin:0;color:var(--text-mid);font-size:12.5px;}
+
+  .card{background:var(--bg-900);border:1px solid var(--border);border-radius:6px;position:relative;}
+  .card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:24px;
+    background:var(--bg-800);border-bottom:1px solid var(--border);border-radius:6px 6px 0 0;
+  }
+  .card::after{
+    content:'';position:absolute;top:9px;left:12px;width:7px;height:7px;border-radius:50%;background:#FF5F57;
+    box-shadow:14px 0 0 #FEBC2E, 28px 0 0 #28C840;
+  }
+
+  /* hero balance */
+  .hero{
+    padding:44px 30px 28px;margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;
+  }
+  .hero .label{font-size:12.5px;color:var(--text-mid);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .hero .label::before{content:'$ balance --show';color:var(--text-low);}
+  .hero .debit-flag{font-size:10px;color:var(--red);background:var(--red-dim);border:1px solid rgba(255,71,87,0.35);padding:3px 8px;border-radius:3px;font-weight:600;letter-spacing:0.3px;}
+  .hero .amount{font-size:38px;font-weight:700;letter-spacing:-0.3px;color:var(--text-hi);}
+  .hero .words{font-size:12px;color:var(--text-low);margin-top:8px;max-width:440px;line-height:1.5;}
+  .hero-actions{display:flex;gap:10px;}
+  .btn{
+    border-radius:4px;padding:10px 16px;font-size:13px;font-weight:600;border:1px solid var(--border);
+    background:var(--bg-700);color:var(--text-hi);transition:filter .15s, transform .1s, border-color .15s;
+    font-family:inherit;
+  }
+  .btn.primary{background:transparent;color:var(--teal);border-color:var(--teal);}
+  .btn.primary:hover{background:var(--teal);color:#04070C;}
+  .btn:hover{border-color:var(--text-low);transform:translateY(-1px);}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .stat-card{padding:38px 18px 18px;display:flex;flex-direction:column;gap:12px;text-align:left;transition:border-color .12s, transform .12s, box-shadow .12s;}
+  .stat-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(54,123,240,0.4);}
+  .stat-ic{width:32px;height:32px;border-radius:5px;display:flex;align-items:center;justify-content:center;}
+  .stat-card .lbl{font-size:12px;color:var(--text-mid);}
+  .stat-card .val{font-size:24px;font-weight:700;}
+  .stat-card .sub{font-size:11px;color:var(--text-low);}
+
+  .split{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start;}
+  .right-col{display:flex;flex-direction:column;gap:16px;}
+  .table-wrap{padding:40px 20px 8px;}
+  .table-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .table-head h3{font-size:14px;margin:0;font-weight:700;}
+  .table-head a{font-size:12px;color:var(--teal);text-decoration:none;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:10.5px;color:var(--text-low);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);letter-spacing:0.4px;text-transform:uppercase;}
+  td{padding:12px 10px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--text-hi);}
+  tr.rowbtn{cursor:pointer;transition:background .1s;}
+  tr.rowbtn:hover td{background:var(--bg-800);}
+  .badge{
+    font-size:10.5px;padding:3px 7px;border-radius:3px;font-weight:600;display:inline-block;
+    border:1px solid currentColor;background:transparent;letter-spacing:0.3px;text-transform:uppercase;
+  }
+  .badge::before{content:'[ ';}
+  .badge::after{content:' ]';}
+  .badge.completed{color:var(--success);}
+  .badge.pending{color:var(--amber);}
+  .badge.failed{color:var(--red);}
+  .badge.debit{color:var(--red);}
+  .amt-debit{color:var(--red);}
+  .amt-debit::before{content:'− ';}
+
+  .donut-wrap{padding:40px 20px 20px;}
+  .donut-wrap h3{font-size:14px;margin:0 0 16px;font-weight:700;}
+  .donut-center{font-family:'JetBrains Mono',monospace;}
+  .legend{margin-top:16px;display:flex;flex-direction:column;gap:9px;}
+  .legend-row{display:flex;align-items:center;gap:9px;font-size:12.5px;}
+  .legend-row .sw{width:8px;height:8px;border-radius:2px;flex:none;}
+  .legend-row .l{flex:1;color:var(--text-mid);}
+  .legend-row .v{font-weight:600;}
+  .legend-row .p{color:var(--text-low);width:44px;text-align:right;}
+
+  /* currency converter */
+  .fx-card{padding:40px 20px 20px;}
+  .fx-card h3{font-size:14px;margin:0 0 4px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .fx-card .fx-sub{font-size:11px;color:var(--text-low);margin-bottom:16px;}
+  .fx-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .fx-input-wrap{
+    flex:1;background:var(--bg-800);border:1px solid var(--border);border-radius:4px;
+    display:flex;align-items:center;padding:0 12px;
+  }
+  .fx-input-wrap span{font-size:12px;color:var(--text-low);margin-right:6px;}
+  .fx-input-wrap input{
+    flex:1;background:none;border:none;outline:none;color:var(--text-hi);font-size:14px;
+    padding:11px 0;font-family:'JetBrains Mono',monospace;min-width:0;
+  }
+  .fx-select{
+    background:var(--bg-800);border:1px solid var(--border);color:var(--text-hi);border-radius:4px;
+    padding:11px 8px;font-size:12px;outline:none;font-family:inherit;max-width:120px;
+  }
+  .fx-swap{
+    width:32px;height:32px;border-radius:4px;background:var(--bg-800);border:1px solid var(--border);
+    color:var(--teal);display:flex;align-items:center;justify-content:center;flex:none;transition:transform .2s, background .15s;
+  }
+  .fx-swap:hover{background:var(--teal-dim);transform:rotate(180deg);}
+  .fx-result{
+    margin-top:6px;padding:16px;border-radius:4px;background:var(--bg-800);border:1px solid var(--border-blue);
+    display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .fx-result .amt{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--teal);}
+  .fx-result .rate{font-size:10.5px;color:var(--text-low);}
+  .fx-quick{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .fx-quick-row{display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-top:1px solid var(--border);}
+  .fx-quick-row .cur{color:var(--text-mid);}
+  .fx-quick-row .val{font-family:'JetBrains Mono',monospace;font-weight:500;}
+  .fx-status{font-size:10px;color:var(--text-low);margin-top:14px;display:flex;align-items:center;gap:6px;}
+  .fx-status .dot{width:6px;height:6px;border-radius:50%;background:var(--success);}
+  .fx-status.offline .dot{background:var(--amber);}
+
+  .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .entity-card{padding:38px 18px 18px;}
+  .entity-card .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .entity-card .id{font-size:10.5px;color:var(--text-low);}
+  .entity-card .name{font-size:14px;font-weight:700;margin:2px 0 10px;}
+  .entity-card .kv{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px solid var(--border);}
+  .entity-card .kv span:first-child{color:var(--text-low);}
+
+  .tree{padding:42px 22px 22px;}
+  .tree ul{list-style:none;margin:0;padding-left:20px;border-left:1px dashed var(--border);}
+  .tree > ul{padding-left:0;border-left:none;}
+  .tree li{margin:9px 0;font-size:12.5px;position:relative;padding-left:14px;}
+  .tree li::before{content:'';position:absolute;left:-1px;top:9px;width:12px;height:1px;background:var(--border);}
+  .tree > ul > li::before{display:none;}
+  .tree .k{color:var(--text-mid);}
+  .tree .k::before{content:'> ';color:var(--text-low);}
+  .tree .v{color:var(--text-hi);font-weight:500;}
+  .tree .tag{font-size:10px;color:var(--teal);background:var(--teal-dim);border:1px solid var(--border-blue);padding:2px 6px;border-radius:3px;margin-left:8px;}
+
+  /* core server flow diagram */
+  .flow-card{padding:46px 22px 26px;}
+  .flow-row{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px;}
+  .flow-step{
+    flex:1 0 150px;min-width:150px;background:var(--bg-800);border:1px solid var(--border);
+    border-radius:4px;padding:14px 14px 16px;text-align:left;cursor:pointer;
+    transition:border-color .12s, transform .12s;
+  }
+  .flow-step:hover{border-color:var(--teal);transform:translateY(-2px);}
+  .flow-step .n{font-size:10px;color:var(--teal);letter-spacing:0.4px;margin-bottom:6px;font-weight:700;}
+  .flow-step .t{font-size:13px;font-weight:700;margin-bottom:4px;}
+  .flow-step .d{font-size:11px;color:var(--text-mid);line-height:1.4;}
+  .flow-arrow{flex:0 0 26px;display:flex;align-items:center;justify-content:center;color:var(--text-low);}
+
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(2,4,7,0.72);align-items:center;justify-content:center;z-index:50;padding:20px;backdrop-filter:blur(2px);}
+  .modal-backdrop.show{display:flex;}
+  .modal{background:var(--bg-900);border:1px solid var(--border-blue);border-radius:6px;width:100%;max-width:460px;padding:24px;max-height:85vh;overflow-y:auto;}
+  .modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .modal-head h3{margin:0;font-size:15px;font-weight:700;}
+  .modal-close{background:none;border:none;color:var(--text-low);font-size:18px;line-height:1;padding:2px;font-family:inherit;}
+  .modal-close:hover{color:var(--red);}
+  .modal .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .modal .kv span:first-child{color:var(--text-mid);}
+  .modal .kv span:last-child{font-weight:500;text-align:right;}
+
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .split{grid-template-columns:1fr;}
+    .detail-grid{grid-template-columns:1fr;}
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="term-window">
+      <div class="term-titlebar">
+        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+        <span class="term-title">root@core-server: ~</span>
+      </div>
+      <div class="term-body">
+        <pre class="ascii-banner">┌─────────────────────────┐
+│      C O R E  S E R V E R  │
+└─────────────────────────┘</pre>
+        <div class="term-line">Core Server v2.7.0 — internal admin console</div>
+        <div class="term-line dim">Authorized operators only. All sessions are logged.</div>
+
+        <div class="term-prompt-row">
+          <span class="prompt">login:</span>
+          <input id="uname" type="text" autocomplete="username" placeholder="admin" spellcheck="false">
+        </div>
+        <div class="term-prompt-row">
+          <span class="prompt">password:</span>
+          <input id="pword" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div class="login-error" id="login-error">Enter both a username and a password to continue.</div>
+        <button class="login-btn" onclick="handleLogin()">[ ENTER ]</button>
+        <div class="login-note"><b>Demo build.</b> Runs entirely in your browser with no server behind it — any username and password works. Balances and transactions are sample data.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+<div class="shell">
+
+  <div class="sidebar">
+    <div class="brand">
+      <div class="glyph">CS</div>
+      <div><div class="name">Core Server</div><div class="sub">Server Dashboard</div></div>
+    </div>
+    <div class="nav-group">
+      <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Dashboard
+      </button>
+      <button class="nav-item" data-view="transactions" onclick="showView('transactions', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 8h13M7 8 10 5M7 8l3 3"/><path d="M17 16H4M17 16l-3 3M17 16l-3-3"/></svg>Transactions
+      </button>
+      <button class="nav-item" data-view="accounts" onclick="showView('accounts', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M8 15h3"/></svg>Accounts
+      </button>
+      <button class="nav-item" data-view="clients" onclick="showView('clients', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c.7-3.4 3.2-5.4 6.5-5.4s5.8 2 6.5 5.4"/><circle cx="17.5" cy="8.5" r="2.4"/><path d="M15.8 14.8c2.6.2 4.5 2 5 5.2"/></svg>Clients
+      </button>
+      <button class="nav-item" data-view="reports" onclick="showView('reports', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Reports
+      </button>
+      <button class="nav-item" data-view="settings" onclick="showView('settings', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Settings
+      </button>
+      <button class="nav-item" data-view="security" onclick="showView('security', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 6v6c0 4.5 3 7.5 7.5 9 4.5-1.5 7.5-4.5 7.5-9V6L12 3Z"/></svg>Security
+      </button>
+      <button class="nav-item" data-view="support" onclick="showView('support', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 4 2.8c-.8.3-1.4 1-1.4 1.9v.4"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>Support
+      </button>
+      <button class="nav-item" data-view="core-server" onclick="showView('core-server', this)">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".6" fill="currentColor"/><circle cx="7" cy="17" r=".6" fill="currentColor"/></svg>Core Server
+      </button>
+    </div>
+    <div class="sidebar-foot"><span class="dot-online"></span> System online &nbsp;·&nbsp; v2.7.0</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search transactions, users, or reference…">
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="av" id="user-avatar">?</div>
+          <div class="who"><div class="n" id="user-name-display">—</div><div class="r">Administrator</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- DASHBOARD ---- -->
+    <div class="view active" id="view-dashboard">
+      <div class="hero card">
+        <div>
+          <div class="label">Total Balance (INR) <span class="debit-flag">All entries debited</span></div>
+          <div class="amount">₹1,37,74,90,794 <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
+          <div class="words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn primary" onclick="openModal('send')">↗ Send</button>
+          <button class="btn" onclick="openModal('receive')">↓ Receive</button>
+          <button class="btn" onclick="showView('transactions')">⋯ More</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <button class="stat-card card" onclick="openModal('stat-total')">
+          <div class="stat-ic" style="background:rgba(91,147,255,0.15);color:var(--blue);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
+          <div class="lbl">Total Transactions</div><div class="val">8</div><div class="sub">Jan – May 2026</div>
+        </button>
+        <button class="stat-card card" onclick="openModal('stat-debit')">
+          <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M12 19l-5-5M12 19l5-5"/></svg></div>
+          <div class="lbl">Total Debited</div><div class="val">₹39,00,00,000</div><div class="sub">100% of transactions are debits</div>
+        </button>
+        <button class="stat-card card" onclick="openModal('stat-pending')">
+          <div class="stat-ic" style="background:var(--amber-dim);color:var(--amber);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+          <div class="lbl">Pending</div><div class="val">4</div><div class="sub">Awaiting confirmation</div>
+        </button>
+        <button class="stat-card card" onclick="openModal('stat-failed')">
+          <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg></div>
+          <div class="lbl">Failed</div><div class="val">1</div><div class="sub">Unsuccessful transactions</div>
+        </button>
+      </div>
+
+      <div class="split">
+        <div class="card table-wrap">
+          <div class="table-head"><h3>Recent Transactions (Debits)</h3><a href="javascript:void(0)" onclick="showView('transactions')">View all</a></div>
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount (INR)</th><th>Status</th></tr></thead>
+            <tbody id="recent-tx-body"></tbody>
+          </table>
+        </div>
+
+        <div class="right-col">
+          <div class="card fx-card">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><path d="M7 10h11M7 10l3-3M7 10l3 3"/><path d="M17 15H6m11 0-3-3m3 3-3 3"/></svg>
+              Currency Conversion
+            </h3>
+            <div class="fx-sub">Convert a ledger amount to another currency.</div>
+
+            <div class="fx-row">
+              <div class="fx-input-wrap">
+                <span>₹</span>
+                <input type="number" id="fx-amount" value="100000" min="0" oninput="convertFx()">
+              </div>
+              <select class="fx-select" id="fx-from" onchange="convertFx()">
+                <option value="INR" selected>₹ INR — Indian Rupee</option>
+                <option value="USD">$ USD — US Dollar</option>
+                <option value="EUR">€ EUR — Euro</option>
+                <option value="GBP">£ GBP — British Pound</option>
+                <option value="AED">د.إ AED — UAE Dirham</option>
+                <option value="JPY">¥ JPY — Japanese Yen</option>
+                <option value="AUD">A$ AUD — Australian Dollar</option>
+                <option value="CAD">C$ CAD — Canadian Dollar</option>
+                <option value="SGD">S$ SGD — Singapore Dollar</option>
+              </select>
+            </div>
+
+            <div style="display:flex;justify-content:center;margin:2px 0;">
+              <button class="fx-swap" onclick="swapFx()" title="Swap currencies">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10h11M7 10l3-3M7 10l3 3"/><path d="M17 15H6m11 0-3-3m3 3-3 3"/></svg>
+              </button>
+            </div>
+
+            <div class="fx-row" style="margin-bottom:0;">
+              <div class="fx-input-wrap" style="background:var(--bg-650);">
+                <span id="fx-to-symbol">$</span>
+                <input type="text" id="fx-result-input" readonly>
+              </div>
+              <select class="fx-select" id="fx-to" onchange="convertFx()">
+                <option value="USD" selected>$ USD — US Dollar</option>
+                <option value="INR">₹ INR — Indian Rupee</option>
+                <option value="EUR">€ EUR — Euro</option>
+                <option value="GBP">£ GBP — British Pound</option>
+                <option value="AED">د.إ AED — UAE Dirham</option>
+                <option value="JPY">¥ JPY — Japanese Yen</option>
+                <option value="AUD">A$ AUD — Australian Dollar</option>
+                <option value="CAD">C$ CAD — Canadian Dollar</option>
+                <option value="SGD">S$ SGD — Singapore Dollar</option>
+              </select>
+            </div>
+
+            <div class="fx-result">
+              <div><div class="amt" id="fx-result-big">$0.00</div></div>
+              <div class="rate" id="fx-rate-line">1 INR = — USD</div>
+            </div>
+
+            <div class="fx-quick" id="fx-quick"></div>
+            <div class="fx-status" id="fx-status"><span class="dot"></span> <span id="fx-status-text">Loading live rates…</span></div>
+          </div>
+
+          <div class="card donut-wrap">
+            <h3>Transaction Overview</h3>
+            <div style="display:flex;justify-content:center;">
+              <svg width="170" height="170" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r="70" fill="none" stroke="var(--bg-700)" stroke-width="18"/>
+                <circle cx="90" cy="90" r="70" fill="none" stroke="#39D97A" stroke-width="18" stroke-dasharray="164.9 439.8" stroke-dashoffset="0" transform="rotate(-90 90 90)" stroke-linecap="round"/>
+                <circle cx="90" cy="90" r="70" fill="none" stroke="#EFAE49" stroke-width="18" stroke-dasharray="219.9 439.8" stroke-dashoffset="-164.9" transform="rotate(-90 90 90)" stroke-linecap="round"/>
+                <circle cx="90" cy="90" r="70" fill="none" stroke="#F0627A" stroke-width="18" stroke-dasharray="55 439.8" stroke-dashoffset="-384.8" transform="rotate(-90 90 90)" stroke-linecap="round"/>
+                <text x="90" y="86" text-anchor="middle" fill="#EEF2FA" font-size="28" font-weight="700" class="donut-center">8</text>
+                <text x="90" y="106" text-anchor="middle" fill="#8B98AC" font-size="12" class="donut-center">Total</text>
+              </svg>
+            </div>
+            <div class="legend">
+              <div class="legend-row"><span class="sw" style="background:#39D97A;"></span><span class="l">Successful</span><span class="v">3</span><span class="p">37.5%</span></div>
+              <div class="legend-row"><span class="sw" style="background:#EFAE49;"></span><span class="l">Pending</span><span class="v">4</span><span class="p">50.0%</span></div>
+              <div class="legend-row"><span class="sw" style="background:#F0627A;"></span><span class="l">Failed</span><span class="v">1</span><span class="p">12.5%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- TRANSACTIONS ---- -->
+    <div class="view" id="view-transactions">
+      <div class="page-head"><h2>Transactions</h2><p>Every ledger entry recorded on the test environment, January – May 2026. All entries are debits. Click a row for its full structure.</p></div>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount (INR)</th><th>Status</th><th>Reference</th></tr></thead>
+          <tbody id="all-tx-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="view" id="view-accounts">
+      <div class="page-head"><h2>Accounts</h2><p>Ledger accounts held on this server. Click a card to inspect its internal structure.</p></div>
+      <div class="detail-grid" id="accounts-grid"></div>
+    </div>
+
+    <div class="view" id="view-clients">
+      <div class="page-head"><h2>Clients</h2><p>Registered client entities linked to this ledger.</p></div>
+      <div class="detail-grid" id="clients-grid"></div>
+    </div>
+
+    <div class="view" id="view-reports">
+      <div class="page-head"><h2>Reports</h2><p>Available report modules and what each one is built from.</p></div>
+      <div class="tree card" id="reports-tree"></div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="page-head"><h2>Settings</h2><p>Server configuration tree for this environment.</p></div>
+      <div class="tree card" id="settings-tree"></div>
+    </div>
+
+    <div class="view" id="view-security">
+      <div class="page-head"><h2>Security</h2><p>Access control and session structure for the signed-in operator.</p></div>
+      <div class="tree card" id="security-tree"></div>
+    </div>
+
+    <div class="view" id="view-support">
+      <div class="page-head"><h2>Support</h2><p>Open channels and internal routing for this console.</p></div>
+      <div class="tree card" id="support-tree"></div>
+    </div>
+
+    <div class="view" id="view-core-server">
+      <div class="page-head"><h2>Core Server</h2><p>How a request moves through the system, from the moment it's submitted to the moment it settles.</p></div>
+
+      <div class="card flow-card">
+        <div class="flow-row" id="flow-row"></div>
+      </div>
+
+      <div class="tree card" id="core-server-tree" style="margin-top:16px;"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+/* All entries are debits, spread across January–May 2026 */
+const transactions = [
+  {date:"08 Jan 2026", desc:"Vendor Settlement",     amount:"₹10,00,00,000", status:"completed", ref:"TX-90112-A", from:"Operating / 0301", to:"Vendor / 7788", channel:"NEFT", note:"Posted to ledger"},
+  {date:"27 Jan 2026", desc:"Client Settlement",     amount:"₹4,00,00,000",  status:"pending",   ref:"TX-90140-B", from:"Settlement Pool / 0009", to:"Partner Bank / 5521", channel:"RTGS", note:"Queued for batch run"},
+  {date:"14 Feb 2026", desc:"Annual Service Charge", amount:"₹2,00,00,000",  status:"completed", ref:"TX-90178-C", from:"Operating / 0301", to:"Fee Collection / 0044", channel:"Internal", note:"Posted to ledger"},
+  {date:"22 Feb 2026", desc:"Client Withdrawal",     amount:"₹6,00,00,000",  status:"failed",    ref:"TX-90199-D", from:"Client Escrow / 0142", to:"Client Wallet / 2207", channel:"NEFT", note:"Bank returned: invalid IFSC"},
+  {date:"09 Mar 2026", desc:"System Adjustment",     amount:"₹1,00,00,000",  status:"pending",   ref:"TX-90231-E", from:"Reconciliation / 0500", to:"Operating / 0301", channel:"Internal", note:"Held for review"},
+  {date:"30 Mar 2026", desc:"Vendor Payout",         amount:"₹5,00,00,000",  status:"pending",   ref:"TX-90260-F", from:"Operating / 0301", to:"Vendor / 8842", channel:"IMPS", note:"Awaiting bank confirmation"},
+  {date:"18 Apr 2026", desc:"Client Bulk Transfer",  amount:"₹8,00,00,000",  status:"completed", ref:"TX-90295-G", from:"Client Escrow / 0142", to:"Client Wallet / 2318", channel:"IMPS", note:"Posted to ledger"},
+  {date:"11 May 2026", desc:"Interest Debit",        amount:"₹3,00,00,000",  status:"pending",   ref:"TX-90322-H", from:"Reserve / 0600", to:"Client Wallet / 2455", channel:"Internal", note:"Scheduled for month-end"},
+];
+
+const accounts = [
+  {id:"ACC-0301", name:"Operating Account",      type:"Operating", balance:"₹42,10,55,000", opened:"11 Feb 2022", status:"Active"},
+  {id:"ACC-0142", name:"Client Escrow Pool",      type:"Escrow",    balance:"₹6,18,42,00,000", opened:"03 May 2022", status:"Active"},
+  {id:"ACC-0009", name:"Settlement Pool",         type:"Clearing",  balance:"₹1,90,12,300", opened:"20 Jun 2022", status:"Active"},
+  {id:"ACC-0044", name:"Fee Collection",          type:"Revenue",   balance:"₹98,44,120", opened:"20 Jun 2022", status:"Active"},
+  {id:"ACC-0500", name:"Reconciliation Suspense", type:"Suspense",  balance:"₹2,00,00,000", opened:"14 Sep 2023", status:"Under review"},
+  {id:"ACC-0600", name:"Reserve Account",         type:"Reserve",   balance:"₹58,20,00,000", opened:"14 Sep 2023", status:"Active"},
+];
+
+const clients = [
+  {id:"CLI-2207", name:"Meridian Traders Pvt Ltd", tier:"Tier 1", accounts:2, kyc:"Verified", since:"2022"},
+  {id:"CLI-2318", name:"Aravalli Freight Co.",      tier:"Tier 2", accounts:1, kyc:"Verified", since:"2023"},
+  {id:"CLI-2455", name:"Northstar Retail Group",    tier:"Tier 1", accounts:3, kyc:"Verified", since:"2021"},
+  {id:"CLI-2560", name:"Kaveri Textiles",           tier:"Tier 3", accounts:1, kyc:"Pending",  since:"2024"},
+  {id:"CLI-2612", name:"Deccan Logistics",          tier:"Tier 2", accounts:2, kyc:"Verified", since:"2023"},
+  {id:"CLI-2701", name:"Silverline Exports",        tier:"Tier 1", accounts:1, kyc:"Verified", since:"2020"},
+];
+
+const statDetails = {
+  "stat-total": {title:"Total Transactions", rows:[["Count","8"],["Date range","08 Jan 2026 – 11 May 2026"],["Type","100% debits"],["Channels used","NEFT, RTGS, IMPS, Internal"],["Largest entry","₹10,00,00,000 · Vendor Settlement"]]},
+  "stat-debit": {title:"Total Debited", rows:[["Total debited","₹39,00,00,000"],["Share of transactions","8 of 8 (100%)"],["Largest single debit","₹10,00,00,000 · 08 Jan"],["Smallest single debit","₹1,00,00,000 · 09 Mar"],["Note","No credit entries in this period"]]},
+  "stat-pending": {title:"Pending Transactions", rows:[["Count","4"],["Share of total","50.0%"],["Value held","₹13,00,00,000"],["Oldest pending","Client Settlement · 27 Jan"],["Reason","Awaiting bank confirmation or batch run"]]},
+  "stat-failed": {title:"Failed Transactions", rows:[["Count","1"],["Share of total","12.5%"],["Value affected","₹6,00,00,000"],["Reference","TX-90199-D"],["Reason","Bank returned: invalid IFSC"]]},
+  "send": {title:"Send funds", rows:[["Status","Demo action — no funds move"],["Available balance","₹1,37,74,90,794 Cr"],["Default source","Operating / 0301"],["Approval required","Yes, 2 signatories"]]},
+  "receive": {title:"Receive funds", rows:[["Status","Demo action — no funds move"],["Default destination","Client Escrow / 0142"],["Supported channels","NEFT, RTGS, IMPS"],["Reference format","TX-XXXXX-X"]]},
+};
+
+/* ---------------- LOGIN ---------------- */
+function handleLogin(){
+  const u = document.getElementById('uname').value.trim();
+  const p = document.getElementById('pword').value.trim();
+  const err = document.getElementById('login-error');
+  if(!u || !p){ err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  document.getElementById('user-name-display').textContent = u;
+  document.getElementById('user-avatar').textContent = u.slice(0,2).toUpperCase();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderAll();
+  initFx();
+}
+document.getElementById('pword').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
+
+/* ---------------- NAV ---------------- */
+function showView(name, el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const target = el || document.querySelector('.nav-item[data-view="'+name+'"]');
+  if(target) target.classList.add('active');
+}
+
+/* ---------------- RENDER ---------------- */
+function statusLabel(status){
+  if(status === 'completed') return 'Totally Completed';
+  return status.charAt(0).toUpperCase()+status.slice(1);
+}
+function badge(status){
+  const label = statusLabel(status);
+  return `<span class="badge ${status}">${label}</span>`;
+}
+
+function renderAll(){
+  document.getElementById('recent-tx-body').innerHTML = transactions.slice(0,5).map((t,i)=>`
+    <tr class="rowbtn" onclick="openTxModal(${i})">
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td>
+    </tr>`).join('');
+
+  document.getElementById('all-tx-body').innerHTML = transactions.map((t,i)=>`
+    <tr class="rowbtn" onclick="openTxModal(${i})">
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
+    </tr>`).join('');
+
+  document.getElementById('accounts-grid').innerHTML = accounts.map((a,i)=>`
+    <button class="entity-card card" onclick="openAccountModal(${i})" style="text-align:left;">
+      <div class="top"><div><div class="id mono">${a.id}</div><div class="name">${a.name}</div></div></div>
+      <div class="kv"><span>Type</span><span>${a.type}</span></div>
+      <div class="kv"><span>Balance</span><span class="mono">${a.balance}</span></div>
+      <div class="kv"><span>Status</span><span>${a.status}</span></div>
+    </button>`).join('');
+
+  document.getElementById('clients-grid').innerHTML = clients.map((c,i)=>`
+    <button class="entity-card card" onclick="openClientModal(${i})" style="text-align:left;">
+      <div class="top"><div><div class="id mono">${c.id}</div><div class="name">${c.name}</div></div></div>
+      <div class="kv"><span>Tier</span><span>${c.tier}</span></div>
+      <div class="kv"><span>Linked accounts</span><span>${c.accounts}</span></div>
+      <div class="kv"><span>KYC</span><span>${c.kyc}</span></div>
+    </button>`).join('');
+
+  document.getElementById('reports-tree').innerHTML = treeHTML([
+    {k:"Ledger Reports", tag:"3 modules", children:[
+      {k:"Monthly debit summary", v:"Runs 23:00 IST, 1st of month"},
+      {k:"Pending queue aging", v:"Runs hourly"},
+      {k:"Failed transaction log", v:"Real-time"},
+    ]},
+    {k:"Compliance Reports", tag:"2 modules", children:[
+      {k:"KYC status export", v:"Weekly"},
+      {k:"Large debit flags", v:"Real-time, > ₹1,00,00,000"},
+    ]},
+    {k:"Client Reports", tag:"2 modules", children:[
+      {k:"Client balance statement", v:"On demand"},
+      {k:"Tier movement log", v:"Monthly"},
+    ]},
+  ]);
+
+  document.getElementById('settings-tree').innerHTML = treeHTML([
+    {k:"Environment", v:"Non-production · Test", tag:"read-only"},
+    {k:"Currency", v:"INR", children:[{k:"Display unit", v:"Crore (Cr)"},{k:"Decimal precision", v:"0"}]},
+    {k:"Approvals", children:[{k:"Outbound signatories required", v:"2"},{k:"Auto-approve under", v:"₹1,00,000"}]},
+    {k:"Notifications", children:[{k:"Failed transaction alerts", v:"Enabled"},{k:"Pending queue digest", v:"Daily, 09:00 IST"}]},
+  ]);
+
+  document.getElementById('security-tree').innerHTML = treeHTML([
+    {k:"Session", children:[
+      {k:"Signed in as", v:document.getElementById('user-name-display').textContent},
+      {k:"Role", v:"Administrator"},{k:"Auth method", v:"Username / password (demo)"},
+      {k:"Session storage", v:"In-memory only, clears on reload"},
+    ]},
+    {k:"Access scope", tag:"4 permissions", children:[
+      {k:"View balances", v:"Granted"},{k:"Approve transactions", v:"Granted"},
+      {k:"Edit settings", v:"Granted"},{k:"Manage operators", v:"Not granted"},
+    ]},
+    {k:"Audit", children:[{k:"Last login", v:"Just now"},{k:"Failed login attempts", v:"0"}]},
+  ]);
+
+  document.getElementById('support-tree').innerHTML = treeHTML([
+    {k:"Internal channels", children:[{k:"Ops on-call", v:"Slack #ledger-ops"},{k:"Escalation", v:"Duty manager, response < 30 min"}]},
+    {k:"Open items", tag:"1 open", children:[{k:"TX-90199-D bank return", v:"Investigating — vendor bank details"}]},
+  ]);
+
+  renderCoreServer();
+}
+
+/* ---------------- CORE SERVER ---------------- */
+const coreServerSteps = [
+  {title:"Client Apps", desc:"Web console and mobile app where a request is submitted.",
+    rows:[["Examples","This dashboard, mobile app, partner API"],["Sends","Signed HTTPS request"],["Auth","Session token issued at login"]]},
+  {title:"API Gateway", desc:"Single entry point. Checks identity, rate limits, and routes the request.",
+    rows:[["Responsibilities","Authentication, rate limiting, routing"],["Rejects","Unsigned or malformed requests"],["Forwards to","Core Ledger Engine"]]},
+  {title:"Core Ledger Engine", desc:"Applies business rules and writes the double-entry record.",
+    rows:[["Pattern","Double-entry bookkeeping"],["Guarantees","Every debit has a matching credit"],["Checks","Balance sufficiency, approval rules"]]},
+  {title:"Primary Database", desc:"The system of record. Every confirmed entry lands here first.",
+    rows:[["Engine","Relational, ACID-compliant"],["Writes","Synchronous, one entry per leg"],["Backup","Continuous, point-in-time recovery"]]},
+  {title:"Message Queue", desc:"Hands off confirmed entries to background workers without blocking the request.",
+    rows:[["Pattern","Publish / subscribe"],["Consumers","Settlement workers, notification service"],["Guarantee","At-least-once delivery"]]},
+  {title:"Settlement Workers", desc:"Batch and route the entry to the right external rail.",
+    rows:[["Rails","NEFT, RTGS, IMPS"],["Retries","Automatic, with backoff"],["On failure","Marks entry failed, logs reason"]]},
+  {title:"Bank Connectors", desc:"Talks to partner banks over their settlement network.",
+    rows:[["Protocol","Bank-specific secure gateway"],["Response","Success, pending, or return code"],["Timeout handling","Falls back to pending, retried next batch"]]},
+  {title:"Audit Log", desc:"Append-only record of everything that happened, used for reports and compliance.",
+    rows:[["Format","Immutable, timestamped"],["Read by","Reports module, compliance exports"],["Retention","7 years, per policy"]]},
+];
+function renderCoreServer(){
+  document.getElementById('flow-row').innerHTML = coreServerSteps.map((s,i)=>`
+    ${i>0?'<div class="flow-arrow">→</div>':''}
+    <div class="flow-step" onclick="openCoreServerModal(${i})">
+      <div class="n">STEP ${i+1}</div>
+      <div class="t">${s.title}</div>
+      <div class="d">${s.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('core-server-tree').innerHTML = treeHTML([
+    {k:"Request lifecycle", tag:"8 stages", children:coreServerSteps.map(s=>({k:s.title, v:s.desc}))},
+    {k:"Consistency model", children:[
+      {k:"Within the ledger engine", v:"Strongly consistent — balances never go negative"},
+      {k:"Across to bank connectors", v:"Eventually consistent — confirmed async via callback"},
+    ]},
+    {k:"Failure handling", children:[
+      {k:"Queue outage", v:"Entries stay in Pending until workers reconnect"},
+      {k:"Bank rejection", v:"Entry marked Failed with the bank's return reason"},
+      {k:"Database outage", v:"Writes rejected at the gateway, nothing is lost silently"},
+    ]},
+  ]);
+}
+function openCoreServerModal(i){
+  const s = coreServerSteps[i];
+  renderModal(`Step ${i+1} · ${s.title}`, s.rows);
+}
+
+function treeHTML(nodes){
+  function renderNodes(list){
+    return '<ul>' + list.map(n=>`
+      <li>
+        <span class="k">${n.k}</span>${n.v?` — <span class="v">${n.v}</span>`:''}${n.tag?`<span class="tag">${n.tag}</span>`:''}
+        ${n.children ? renderNodes(n.children) : ''}
+      </li>`).join('') + '</ul>';
+  }
+  return renderNodes(nodes);
+}
+
+/* ---------------- MODALS ---------------- */
+function openModal(key){ const d = statDetails[key]; renderModal(d.title, d.rows); }
+function openTxModal(i){
+  const t = transactions[i];
+  renderModal(`${t.desc} · ${t.ref}`, [
+    ["Date", t.date],["Type","Debit"],["Amount", t.amount+" Cr"],["Status", statusLabel(t.status)],
+    ["From", t.from],["To", t.to],["Channel", t.channel],["Note", t.note],
+  ]);
+}
+function openAccountModal(i){ const a = accounts[i]; renderModal(`${a.name} · ${a.id}`, [["Type", a.type],["Balance", a.balance],["Opened", a.opened],["Status", a.status]]); }
+function openClientModal(i){ const c = clients[i]; renderModal(`${c.name} · ${c.id}`, [["Tier", c.tier],["Linked accounts", c.accounts],["KYC status", c.kyc],["Client since", c.since]]); }
+function renderModal(title, rows){
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-head"><h3>${title}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    ${rows.map(r=>`<div class="kv"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}
+  `;
+  document.getElementById('modal-backdrop').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal-backdrop').classList.remove('show'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ---------------- CURRENCY CONVERSION ---------------- */
+const symbols = {INR:"₹", USD:"$", EUR:"€", GBP:"£", AED:"د.إ", JPY:"¥", AUD:"A$", CAD:"C$", SGD:"S$"};
+const fallbackRates = { // units of currency per 1 INR
+  INR:1, USD:0.0119, EUR:0.0109, GBP:0.0094, AED:0.0437, JPY:1.78, AUD:0.0182, CAD:0.0163, SGD:0.0160
+};
+let liveRates = null;
+let ratesTimestamp = null;
+
+async function initFx(){
+  try{
+    const res = await fetch('https://api.frankfurter.app/latest?amount=1&from=INR&to=USD,EUR,GBP,JPY,AUD,CAD,SGD');
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    liveRates = {INR:1, USD:data.rates.USD, EUR:data.rates.EUR, GBP:data.rates.GBP, JPY:data.rates.JPY, AUD:data.rates.AUD, CAD:data.rates.CAD, SGD:data.rates.SGD, AED:fallbackRates.AED};
+    ratesTimestamp = data.date || null;
+    setFxStatus(true);
+  }catch(e){
+    liveRates = null;
+    setFxStatus(false);
+  }
+  convertFx();
+  renderFxQuick();
+}
+function setFxStatus(live){
+  const el = document.getElementById('fx-status');
+  const txt = document.getElementById('fx-status-text');
+  if(live){ el.classList.remove('offline'); txt.textContent = ratesTimestamp ? `Mid-market rates as of ${ratesTimestamp}` : 'Live mid-market rates'; }
+  else{ el.classList.add('offline'); txt.textContent = 'Live rates unavailable — showing reference rates'; }
+}
+function getRates(){ return liveRates || fallbackRates; }
+function convertOne(amount, from, to){
+  const r = getRates();
+  const inInr = amount / (r[from] || 1);
+  return inInr * (r[to] || 1);
+}
+function convertFx(){
+  const amount = parseFloat(document.getElementById('fx-amount').value) || 0;
+  const from = document.getElementById('fx-from').value;
+  const to = document.getElementById('fx-to').value;
+  const result = convertOne(amount, from, to);
+  document.getElementById('fx-result-input').value = result.toLocaleString(undefined,{maximumFractionDigits:2});
+  document.getElementById('fx-to-symbol').textContent = symbols[to] || to;
+  document.getElementById('fx-result-big').textContent = (symbols[to]||'') + result.toLocaleString(undefined,{maximumFractionDigits:2});
+  const rate = convertOne(1, from, to);
+  document.getElementById('fx-rate-line').textContent = `1 ${from} = ${rate.toLocaleString(undefined,{maximumFractionDigits:4})} ${to}`;
+}
+function swapFx(){
+  const f = document.getElementById('fx-from'), t = document.getElementById('fx-to');
+  const tmp = f.value; f.value = t.value; t.value = tmp;
+  convertFx();
+}
+function renderFxQuick(){
+  const balanceInr = 137749079400; // total balance in absolute INR (Cr display value scaled for reference)
+  const list = ["USD","EUR","GBP","AED","JPY","SGD"];
+  document.getElementById('fx-quick').innerHTML = list.map(c=>{
+    const val = convertOne(100000, "INR", c);
+    return `<div class="fx-quick-row"><span class="cur">₹1,00,000 in ${c}</span><span class="val">${symbols[c]}${val.toLocaleString(undefined,{maximumFractionDigits:2})}</span></div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
