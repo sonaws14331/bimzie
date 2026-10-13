@@ -304,6 +304,12 @@
   .send-msg{font-size:12.5px;margin-top:10px;min-height:16px;}
   .send-msg.err{color:var(--red);}
   .send-msg.ok{color:var(--success);}
+  .saved-list{display:flex;flex-direction:column;gap:6px;margin-bottom:6px;}
+  .saved-acc{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--bg-950);border:1px solid var(--border);border-radius:3px;padding:10px 12px;color:var(--text-hi);font-family:inherit;font-size:12.5px;}
+  .saved-acc:hover{border-color:var(--teal);}
+  .saved-acc .sa-no{font-family:monospace;color:var(--text-mid);font-size:12px;margin-top:3px;}
+  .saved-acc .sa-bal{color:var(--text-mid);font-size:12px;white-space:nowrap;}
+  .saved-acc[disabled]{opacity:.45;cursor:not-allowed;}
 
   @media (max-width:900px){
     .shell{grid-template-columns:1fr;}
@@ -496,11 +502,11 @@
       <div class="hero card">
         <div>
           <div class="label">Total Balance (INR) <span class="debit-flag">All entries debited</span></div>
-          <div class="amount">₹1,37,74,90,794 <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
-          <div class="words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
+          <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span> <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
+          <div class="words" id="dash-words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
         </div>
         <div class="hero-actions">
-          <button class="btn primary" onclick="openModal('send')">↗ Send</button>
+          <button class="btn primary" onclick="openDashSend()">↗ Send</button>
           <button class="btn" onclick="openModal('receive')">↓ Receive</button>
           <button class="btn" onclick="showView('transactions')">⋯ More</button>
         </div>
@@ -1003,6 +1009,90 @@ function submitSend(i){
   document.getElementById('send-bal').textContent = from.balance;
   document.getElementById('send-amt').value = '';
   msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref}`;
+}
+/* ---- send money from the dashboard balance to a saved account ---- */
+/* Kept in paise as a BigInt — the dashboard total is too large for a plain Number */
+let dashPaise = 1377490794n * 10000000n * 100n;
+function dashCrText(){
+  const cr = dashPaise / 1000000000n, rem = dashPaise % 1000000000n;
+  const frac = rem ? '.' + String(rem * 100n / 1000000000n).padStart(2,'0') : '';
+  return '₹' + cr.toLocaleString('en-IN') + (frac === '.00' ? '' : frac);
+}
+function numberWords(n){
+  const ones = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+  const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  const under1000 = x=>{
+    const out = [];
+    if(x >= 100){ out.push(ones[Math.floor(x/100)] + ' hundred'); x %= 100; }
+    if(x >= 20){ out.push(tens[Math.floor(x/10)] + (x % 10 ? '-' + ones[x % 10] : '')); }
+    else if(x) out.push(ones[x]);
+    return out.join(' ');
+  };
+  if(n === 0n) return 'zero';
+  const scales = ['','thousand','million','billion','trillion'];
+  const parts = []; let i = 0;
+  while(n > 0n){ const chunk = Number(n % 1000n); if(chunk) parts.unshift(under1000(chunk) + (scales[i] ? ' ' + scales[i] : '')); n /= 1000n; i++; }
+  return parts.join(' ');
+}
+function renderDashBalance(){
+  document.getElementById('dash-amount').textContent = dashCrText();
+  const w = numberWords(dashPaise / 1000000000n);
+  document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' crore only.';
+  statDetails.send.rows[1][1] = dashCrText() + ' Cr';
+}
+function openDashSend(){
+  const list = accounts.map((a,i)=>{
+    const blocked = a.frozen || a.status === 'Closed';
+    return `<button class="saved-acc" onclick="openDashSendTo(${i})"${blocked ? ' disabled' : ''}>
+      <span><span>${esc(a.name)} · ${a.id}</span><div class="sa-no">${groupAcc(a.accNo)} · ${esc(a.ifsc)}</div></span>
+      <span class="sa-bal">${blocked ? (a.frozen ? 'Frozen' : 'Closed') : a.balance}</span>
+    </button>`;
+  }).join('');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-head"><h3>Send money · choose a saved account</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="kv" style="margin-bottom:14px;"><span>From</span><span>Dashboard balance · ${dashCrText()} Cr</span></div>
+    <div class="saved-list">${list || '<div class="send-msg">No saved accounts yet — add one from Accounts.</div>'}</div>`;
+  document.getElementById('modal-backdrop').classList.add('show');
+}
+function openDashSendTo(i){
+  const a = accounts[i];
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="kv"><span>From</span><span>Dashboard balance</span></div>
+    <div class="kv"><span>Available</span><span id="dash-send-bal">${dashCrText()} Cr</span></div>
+    <div class="kv"><span>To</span><span>${esc(a.name)} · ${esc(a.holder)}</span></div>
+    <div class="kv"><span>Account No.</span><span class="mono">${groupAcc(a.accNo)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
+    <div class="send-field"><label>Amount (₹) — e.g. 50000, 2.5L, 10cr</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="submitDashSend(${i})">Send</button>
+      <button class="btn" onclick="openDashSend()">Back</button>
+    </div>
+    <div class="send-msg" id="send-msg"></div>`;
+  const amt = document.getElementById('send-amt');
+  amt.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitDashSend(i); });
+  amt.focus();
+}
+function submitDashSend(i){
+  const to = accounts[i];
+  const n = parseAmount(document.getElementById('send-amt').value.trim());
+  const msg = document.getElementById('send-msg');
+  const paise = n > 0 ? BigInt(Math.round(n * 100)) : 0n;
+  let problem = null;
+  if(to.status === 'Closed') problem = `${to.id} is closed`;
+  else if(to.frozen) problem = `${to.id} is frozen`;
+  else if(!(n > 0)) problem = 'enter a valid amount';
+  else if(paise > dashPaise) problem = `insufficient funds (available ${dashCrText()} Cr)`;
+  if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
+  dashPaise -= paise;
+  const e = postEntry(to, 'Transfer from dashboard balance', 0, n);
+  transactions.unshift({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
+    from:"Dashboard balance", to:`${to.name} / ${to.accNo.slice(-4)}`, channel:"Internal", note:"Posted to ledger"});
+  audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
+  renderDashBalance(); refreshAccounts();
+  document.getElementById('dash-send-bal').textContent = dashCrText() + ' Cr';
+  document.getElementById('send-amt').value = '';
+  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref}`;
 }
 function openClientModal(i){ const c = clients[i]; renderModal(`${c.name} · ${c.id}`, [["Tier", c.tier],["Linked accounts", c.accounts],["KYC status", c.kyc],["Client since", c.since]]); }
 function renderModal(title, rows){
