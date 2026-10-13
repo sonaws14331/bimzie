@@ -296,6 +296,14 @@
   .modal .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:9px 0;border-bottom:1px solid var(--border);}
   .modal .kv span:first-child{color:var(--text-mid);}
   .modal .kv span:last-child{font-weight:500;text-align:right;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;}
+  .send-field{margin-bottom:12px;}
+  .send-field label{display:block;font-size:11.5px;color:var(--text-mid);margin-bottom:5px;}
+  .send-field input,.send-field select{width:100%;background:var(--bg-950);border:1px solid var(--border);border-radius:3px;padding:8px 10px;color:var(--text-hi);font-family:inherit;font-size:13px;outline:none;}
+  .send-field input:focus,.send-field select:focus{border-color:var(--teal);}
+  .send-msg{font-size:12.5px;margin-top:10px;min-height:16px;}
+  .send-msg.err{color:var(--red);}
+  .send-msg.ok{color:var(--success);}
 
   @media (max-width:900px){
     .shell{grid-template-columns:1fr;}
@@ -303,6 +311,91 @@
     .stat-grid{grid-template-columns:repeat(2,1fr);}
     .split{grid-template-columns:1fr;}
     .detail-grid{grid-template-columns:1fr;}
+  }
+
+  /* ---------- ADD ACCOUNT TERMINAL WINDOW ---------- */
+  .nav-item.nav-launch{color:var(--success);border:1px dashed rgba(57,217,122,0.35);border-left:2px solid var(--success);margin-top:10px;}
+  .nav-item.nav-launch::before{content:'>';color:var(--success);}
+  .nav-item.nav-launch:hover{background:var(--success-dim);color:var(--success);}
+  .page-head.with-action{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;}
+  .entity-card .kv .acno{letter-spacing:0.5px;}
+
+  .tw-backdrop{display:none;position:fixed;inset:0;background:rgba(2,4,7,0.6);z-index:60;backdrop-filter:blur(2px);}
+  .tw-backdrop.show{display:block;}
+  .tw{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,calc(100vw - 32px));height:min(680px,calc(100vh - 32px));
+    background:#07090B;border:1px solid var(--border-blue);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.8),0 0 60px rgba(54,123,240,0.12);
+  }
+  .tw.max{left:0;top:0;transform:none;width:100vw;height:100vh;border-radius:0;}
+  .tw-bar{cursor:move;user-select:none;}
+  .tw-bar .dot{cursor:pointer;border:none;padding:0;}
+  .tw-bar .term-title{flex:1;text-align:center;margin-right:46px;color:var(--text-mid);}
+  .tw-tabs{display:flex;gap:2px;background:var(--bg-900);border-bottom:1px solid var(--border);padding:0 8px;font-size:11.5px;}
+  .tw-tab{padding:7px 14px;color:var(--text-low);border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;}
+  .tw-tab.active{color:var(--success);border-bottom-color:var(--success);background:#07090B;}
+  .tw-main{flex:1;display:grid;grid-template-columns:360px 1fr;min-height:0;}
+
+  .tw-form{border-right:1px solid var(--border);overflow-y:auto;padding:16px 18px 20px;font-size:12px;background:var(--bg-950);}
+  .tw-form .cm{color:var(--text-low);margin:0 0 12px;}
+  .tw-form .cm.sec{margin:18px 0 10px;color:var(--teal);}
+  .tw-field{margin-bottom:12px;}
+  .tw-field label{display:block;color:var(--success);margin-bottom:5px;font-size:11.5px;}
+  .tw-field label .k{color:var(--text-low);}
+  .tw-field input,.tw-field select{
+    width:100%;background:var(--bg-900);border:1px solid var(--border);border-radius:3px;padding:7px 9px;color:var(--text-hi);
+    font-family:inherit;font-size:12.5px;outline:none;caret-color:var(--success);
+  }
+  .tw-field input:focus,.tw-field select:focus{border-color:var(--teal);}
+  .acbox-row{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;}
+  .acbox-row .sep{color:var(--text-low);margin:0 1px;}
+  .acbox{
+    width:100%;height:30px;text-align:left;letter-spacing:1px;padding:0 9px !important;background:var(--bg-900);border:1px solid var(--border);border-radius:3px;
+    color:var(--text-hi);font-family:inherit;font-size:14px;font-weight:600;outline:none;caret-color:var(--success);padding:0;
+  }
+  .acbox:focus{border-color:var(--success);box-shadow:0 0 0 2px var(--success-dim);}
+  .acbox.filled{border-color:var(--border-blue);color:var(--teal);}
+  .acbox-row.ok .acbox{border-color:rgba(57,217,122,0.55);color:var(--success);}
+  .acbox-row.bad .acbox{border-color:rgba(255,71,87,0.55);}
+  .acbox-meta{display:flex;justify-content:space-between;margin-top:5px;font-size:10.5px;color:var(--text-low);}
+  .acbox-meta button{background:none;border:none;color:var(--teal);font-size:10.5px;padding:0;font-family:inherit;}
+  .acbox-meta .st.ok{color:var(--success);}
+  .acbox-meta .st.bad{color:var(--red);}
+  .tw-run{
+    width:100%;margin-top:6px;background:transparent;color:var(--success);border:1px solid var(--success);padding:9px;border-radius:3px;
+    font-family:inherit;font-weight:700;font-size:12.5px;letter-spacing:0.5px;
+  }
+  .tw-run:hover{background:var(--success);color:#04070C;}
+  .tw-err{color:var(--red);font-size:11px;margin-top:8px;min-height:14px;}
+  .tw-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .tw-opt{
+    text-align:left;background:var(--bg-900);border:1px solid var(--border);border-radius:3px;padding:7px 8px;color:var(--text-hi);
+    font-family:inherit;font-size:11px;transition:border-color .12s,background .12s;
+  }
+  .tw-opt:hover{border-color:var(--teal);background:var(--teal-dim);}
+  .tw-opt b{display:block;color:var(--teal);font-weight:600;margin-bottom:2px;}
+  .tw-opt span{color:var(--text-low);font-size:10px;}
+  .tw-opt-grp{grid-column:1 / -1;color:var(--text-low);font-size:10.5px;margin-top:6px;}
+
+  .tw-term{display:flex;flex-direction:column;min-height:0;font-size:12.5px;line-height:1.55;}
+  .tw-out{flex:1;overflow-y:auto;padding:14px 18px 6px;white-space:pre-wrap;word-break:break-word;}
+  .tw-out .ln{min-height:1.55em;}
+  .tw-out .c-ok{color:var(--success);}
+  .tw-out .c-err{color:var(--red);}
+  .tw-out .c-warn{color:var(--amber);}
+  .tw-out .c-dim{color:var(--text-low);}
+  .tw-out .c-hi{color:var(--teal);}
+  .tw-out .c-cmd{color:var(--text-hi);}
+  .tw-out .c-pr{color:var(--success);}
+  .tw-in{display:flex;align-items:center;gap:8px;padding:8px 18px 14px;border-top:1px solid var(--border);background:var(--bg-950);}
+  .tw-in .pr{color:var(--success);flex:none;white-space:nowrap;}
+  .tw-in .pr .path{color:var(--teal);}
+  .tw-in input{flex:1;background:none;border:none;outline:none;color:var(--text-hi);font-family:inherit;font-size:13px;caret-color:var(--success);min-width:0;}
+
+  @media (max-width:900px){
+    .tw-main{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
+    .tw-form{border-right:none;border-bottom:1px solid var(--border);max-height:42vh;}
+    .tw-bar .term-title{margin-right:0;}
   }
 
 </style>
@@ -376,6 +469,9 @@
       </button>
       <button class="nav-item" data-view="core-server" onclick="showView('core-server', this)">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><circle cx="7" cy="7" r=".6" fill="currentColor"/><circle cx="7" cy="17" r=".6" fill="currentColor"/></svg>Core Server
+      </button>
+      <button class="nav-item nav-launch" onclick="openTerminal()">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>Add Account
       </button>
     </div>
     <div class="sidebar-foot"><span class="dot-online"></span> System online &nbsp;·&nbsp; v2.7.0</div>
@@ -531,7 +627,7 @@
     </div>
 
     <div class="view" id="view-accounts">
-      <div class="page-head"><h2>Accounts</h2><p>Ledger accounts held on this server. Click a card to inspect its internal structure.</p></div>
+      <div class="page-head with-action"><div><h2>Accounts</h2><p>Ledger accounts held on this server. Click a card to inspect its internal structure.</p></div><button class="btn primary" onclick="openTerminal()">$ add-account</button></div>
       <div class="detail-grid" id="accounts-grid"></div>
     </div>
 
@@ -576,6 +672,72 @@
 
 <div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- ================= ADD ACCOUNT TERMINAL ================= -->
+<div class="tw-backdrop" id="tw-backdrop" onclick="if(event.target===this)closeTerminal()">
+  <div class="tw" id="tw" role="dialog" aria-label="Add account terminal">
+    <div class="term-titlebar tw-bar" id="tw-bar">
+      <button class="dot dot-r" title="Close" onclick="closeTerminal()"></button>
+      <button class="dot dot-y" title="Minimize" onclick="closeTerminal()"></button>
+      <button class="dot dot-g" title="Maximize" onclick="toggleMaxTerminal()"></button>
+      <span class="term-title" id="tw-title">operator@core-server: ~/accounts — bash</span>
+    </div>
+    <div class="tw-tabs">
+      <button class="tw-tab active">bash — accounts</button>
+      <button class="tw-tab" onclick="runCommand('help')">man banking</button>
+    </div>
+    <div class="tw-main">
+
+      <aside class="tw-form">
+        <div class="cm"># new-account.conf — fill in the boxes, then run</div>
+
+        <div class="tw-field">
+          <label>account_number <span class="k">= digits only, any length</span></label>
+          <div class="acbox-row" id="acno-row"></div>
+          <div class="acbox-meta"><span class="st" id="acno-st">0 digits</span><button type="button" onclick="generateAccNo()">[ generate ]</button></div>
+        </div>
+        <div class="tw-field">
+          <label>confirm_account_number</label>
+          <div class="acbox-row" id="acno2-row"></div>
+          <div class="acbox-meta"><span class="st" id="acno2-st">re-enter to confirm</span><button type="button" onclick="clearAccBoxes()">[ clear ]</button></div>
+        </div>
+        <div class="tw-field">
+          <label>holder_name</label>
+          <input id="f-holder" placeholder="e.g. Meridian Traders Pvt Ltd" autocomplete="off">
+        </div>
+        <div class="tw-field">
+          <label>account_name</label>
+          <input id="f-name" placeholder="e.g. Meridian Current A/c" autocomplete="off">
+        </div>
+        <div class="tw-field">
+          <label>account_type</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="tw-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><label>ifsc</label><input id="f-ifsc" placeholder="CORE0000301" maxlength="11" autocomplete="off" style="text-transform:uppercase;"></div>
+          <div><label>branch</label><input id="f-branch" placeholder="Mumbai Main" autocomplete="off"></div>
+        </div>
+        <div class="tw-field">
+          <label>opening_deposit <span class="k">₹</span></label><input id="f-deposit" placeholder="0" autocomplete="off">
+        </div>
+        <button class="tw-run" onclick="submitAccountForm()">$ ./create-account --commit</button>
+        <div class="tw-err" id="tw-err"></div>
+
+        <div class="cm sec"># banking options — click to load into the prompt</div>
+        <div class="tw-opts" id="tw-opts"></div>
+      </aside>
+
+      <section class="tw-term" onclick="if(!window.getSelection().toString())document.getElementById('tw-input').focus()">
+        <div class="tw-out" id="tw-out"></div>
+        <div class="tw-in">
+          <span class="pr" id="tw-prompt">operator@core-server:<span class="path">~/accounts</span>$</span>
+          <input id="tw-input" autocomplete="off" spellcheck="false" aria-label="Terminal command">
+        </div>
+      </section>
+
+    </div>
+  </div>
 </div>
 
 <script>
@@ -667,10 +829,11 @@ function renderAll(){
 
   document.getElementById('accounts-grid').innerHTML = accounts.map((a,i)=>`
     <button class="entity-card card" onclick="openAccountModal(${i})" style="text-align:left;">
-      <div class="top"><div><div class="id mono">${a.id}</div><div class="name">${a.name}</div></div></div>
+      <div class="top"><div><div class="id mono">${a.id}</div><div class="name">${esc(a.name)}</div></div></div>
+      <div class="kv"><span>Account No.</span><span class="mono acno">${maskAcc(a.accNo)}</span></div>
       <div class="kv"><span>Type</span><span>${a.type}</span></div>
       <div class="kv"><span>Balance</span><span class="mono">${a.balance}</span></div>
-      <div class="kv"><span>Status</span><span>${a.status}</span></div>
+      <div class="kv"><span>Status</span><span>${a.frozen ? 'Frozen' : a.status}</span></div>
     </button>`).join('');
 
   document.getElementById('clients-grid').innerHTML = clients.map((c,i)=>`
@@ -792,7 +955,55 @@ function openTxModal(i){
     ["From", t.from],["To", t.to],["Channel", t.channel],["Note", t.note],
   ]);
 }
-function openAccountModal(i){ const a = accounts[i]; renderModal(`${a.name} · ${a.id}`, [["Type", a.type],["Balance", a.balance],["Opened", a.opened],["Status", a.status]]); }
+function openAccountModal(i){
+  const a = accounts[i];
+  renderModal(`${esc(a.name)} · ${a.id}`, [["Account No.", groupAcc(a.accNo)],["Holder", esc(a.holder)],["Type", a.type],["Balance", a.balance],["IFSC", a.ifsc],["Branch", esc(a.branch)],
+    ["KYC", a.kyc],["Daily limit", fmtINR(a.limit)],["Opened", a.opened],["Status", a.frozen ? 'Frozen' : a.status]]);
+  document.getElementById('modal-body').insertAdjacentHTML('beforeend',
+    `<div class="modal-actions"><button class="btn primary" onclick="openSendModal(${i})">Send money</button></div>`);
+}
+
+/* ---- send money from an account ---- */
+function openSendModal(i){
+  const a = accounts[i];
+  const others = accounts.map((x,k)=>k === i ? '' : `<option value="${k}">${esc(x.name)} · ${x.id} · ${maskAcc(x.accNo)}</option>`).join('');
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="kv"><span>From</span><span>${esc(a.name)} · ${maskAcc(a.accNo)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>Available balance</span><span id="send-bal">${a.balance}</span></div>
+    <div class="send-field"><label>To account</label><select id="send-to">${others}</select></div>
+    <div class="send-field"><label>Amount (₹)</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="submitSend(${i})">Send</button>
+      <button class="btn" onclick="openAccountModal(${i})">Back</button>
+    </div>
+    <div class="send-msg" id="send-msg"></div>`;
+  document.getElementById('modal-backdrop').classList.add('show');
+  document.getElementById('send-amt').focus();
+}
+function sendProblem(from, to, n){
+  if(!to) return 'choose a destination account';
+  if(from.status === 'Closed') return `${from.id} is closed`;
+  if(from.frozen) return `${from.id} is frozen — unfreeze it first`;
+  if(to.status === 'Closed') return `${to.id} is closed`;
+  if(to.frozen) return `${to.id} is frozen`;
+  if(!(n > 0)) return 'enter a valid amount';
+  if(n > parseINR(from.balance)) return `insufficient funds (available ${from.balance})`;
+  return null;
+}
+function submitSend(i){
+  const from = accounts[i], to = accounts[+document.getElementById('send-to').value];
+  const n = parseAmount(document.getElementById('send-amt').value.trim());
+  const msg = document.getElementById('send-msg');
+  const problem = sendProblem(from, to, n);
+  if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
+  const e = postEntry(from, `Transfer to ${to.id}`, n, 0);
+  postEntry(to, `Transfer from ${from.id}`, 0, n);
+  audit(`transfer ${fmtINR(n)} ${from.id}→${to.id}`); refreshAccounts();
+  document.getElementById('send-bal').textContent = from.balance;
+  document.getElementById('send-amt').value = '';
+  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref}`;
+}
 function openClientModal(i){ const c = clients[i]; renderModal(`${c.name} · ${c.id}`, [["Tier", c.tier],["Linked accounts", c.accounts],["KYC status", c.kyc],["Client since", c.since]]); }
 function renderModal(title, rows){
   document.getElementById('modal-body').innerHTML = `
@@ -863,6 +1074,569 @@ function renderFxQuick(){
     return `<div class="fx-quick-row"><span class="cur">₹1,00,000 in ${c}</span><span class="val">${symbols[c]}${val.toLocaleString(undefined,{maximumFractionDigits:2})}</span></div>`;
   }).join('');
 }
+
+/* ---------------- ADD ACCOUNT TERMINAL ---------------- */
+/* Everything here runs in the browser session only — sample data, no real funds move. */
+const ACC_TYPES = ["Savings","Current","Salary","Fixed Deposit","Recurring Deposit","NRE","NRO","Escrow","Operating","Clearing","Reserve","Revenue","Suspense"];
+const UPDATABLE = {name:"Account name", holder:"Holder name", type:"Account type", ifsc:"IFSC", branch:"Branch", status:"Status", limit:"Daily limit", kyc:"KYC"};
+const termState = {history:[], hIdx:0, wizard:null, audit:[], booted:false};
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function parseINR(s){ return Number(String(s).replace(/[^\d.]/g,'')) || 0; }
+function fmtINR(n){ return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2}); }
+function parseAmount(s){
+  if(s == null) return NaN;
+  const m = String(s).trim().toLowerCase().replace(/[₹,\s]/g,'').match(/^(\d+(?:\.\d+)?)(k|l|lakh|cr|crore)?$/);
+  if(!m) return NaN;
+  const mult = {k:1e3, l:1e5, lakh:1e5, cr:1e7, crore:1e7}[m[2]] || 1;
+  return Math.round(parseFloat(m[1]) * mult * 100) / 100;
+}
+function todayStr(){ return new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}); }
+function maskAcc(no){ return no ? 'XXXX XXXX ' + no.slice(-4) : '—'; }
+function groupAcc(no){ return no ? no.replace(/(\d{4})(?=\d)/g, '$1 ') : '—'; }
+function ifscValid(code){ return /^[A-Z]{4}0[A-Z0-9]{6}$/.test(String(code).toUpperCase()); }
+/* Luhn-style check digit so generated numbers can be validated */
+function checkDigit(body){
+  let sum = 0;
+  body.split('').reverse().forEach((d,i)=>{ let n = +d; if(i % 2 === 0){ n *= 2; if(n > 9) n -= 9; } sum += n; });
+  return String((10 - sum % 10) % 10);
+}
+function accNoValid(no){ return /^\d+$/.test(no); }
+function randomAccNo(){
+  let no;
+  do { const body = '5021' + String(Math.floor(Math.random()*1e9)).padStart(9,'0'); no = body + checkDigit(body); }
+  while(accounts.some(a=>a.accNo === no));
+  return no;
+}
+
+/* Give the seeded accounts the same structure new ones get */
+accounts.forEach(a=>{
+  const n = a.id.split('-')[1];
+  const body = '50210000' + n.slice(1);
+  Object.assign(a, {
+    accNo: a.accNo || body + checkDigit(body), holder: a.holder || "Core Server Ltd", ifsc: a.ifsc || "CORE0000" + n.slice(1),
+    branch: a.branch || "Mumbai Main", kyc: a.kyc || "Verified", limit: a.limit || 50000000,
+    frozen:false, cards:[], cheques:[], deposits:[], ledger: a.ledger || [{date:a.opened, desc:"Opening balance", dr:0, cr:parseINR(a.balance), bal:parseINR(a.balance), ref:"OPEN"}],
+  });
+});
+
+function findAccount(q){
+  if(!q) return null;
+  const k = String(q).toUpperCase().replace(/\s/g,'');
+  return accounts.find(a=>a.id.toUpperCase() === k || a.id.toUpperCase() === 'ACC-' + k || a.accNo === k)
+      || (k.length === 4 && /^\d+$/.test(k) ? accounts.find(a=>a.accNo.endsWith(k)) : null);
+}
+function nextRef(){ return 'TX-' + String(90400 + Math.floor(Math.random()*9000)) + '-' + 'ABCDEFGHJK'[Math.floor(Math.random()*10)]; }
+function postEntry(a, desc, dr, cr){
+  const bal = parseINR(a.balance) - dr + cr;
+  a.balance = fmtINR(bal);
+  const e = {date:todayStr(), desc, dr, cr, bal, ref:nextRef()};
+  a.ledger.push(e);
+  return e;
+}
+function audit(msg){ termState.audit.push(`${new Date().toLocaleTimeString('en-GB')}  ${msg}`); }
+function refreshAccounts(){ if(document.getElementById('accounts-grid')) renderAll(); }
+
+/* ---- output ---- */
+function out(text, cls){
+  const o = document.getElementById('tw-out');
+  String(text).split('\n').forEach(line=>{
+    const d = document.createElement('div');
+    d.className = 'ln' + (cls ? ' c-' + cls : '');
+    d.textContent = line;
+    o.appendChild(d);
+  });
+  o.scrollTop = o.scrollHeight;
+}
+function outHTML(html){
+  const o = document.getElementById('tw-out');
+  const d = document.createElement('div'); d.className = 'ln'; d.innerHTML = html;
+  o.appendChild(d); o.scrollTop = o.scrollHeight;
+}
+function table(headers, rows){
+  const w = headers.map((h,i)=>Math.max(h.length, ...rows.map(r=>String(r[i]).length)));
+  const line = r=>r.map((c,i)=>String(c).padEnd(w[i])).join('  ');
+  out(line(headers), 'hi');
+  out(w.map(n=>'─'.repeat(n)).join('  '), 'dim');
+  rows.forEach(r=>out(line(r)));
+}
+function kvOut(pairs){
+  const w = Math.max(...pairs.map(p=>p[0].length));
+  pairs.forEach(([k,v])=>outHTML(`<span class="c-dim">${esc(k.padEnd(w))}</span>  ${esc(v)}`));
+}
+function usage(cmd){ out('usage: ' + COMMANDS[cmd].usage, 'warn'); }
+function needAccount(q){
+  const a = findAccount(q);
+  if(!a){ out(`error: account '${q || ''}' not found — try 'ls'`, 'err'); return null; }
+  return a;
+}
+function needActive(a){
+  if(a.status === 'Closed'){ out(`error: ${a.id} is closed`, 'err'); return false; }
+  if(a.frozen){ out(`error: ${a.id} is frozen — run 'unfreeze ${a.id}' first`, 'err'); return false; }
+  return true;
+}
+
+/* ---- commands ---- */
+const COMMANDS = {
+  help:      {grp:"system",   usage:"help [command]", desc:"List every command, or show help for one"},
+  clear:     {grp:"system",   usage:"clear", desc:"Clear the screen"},
+  whoami:    {grp:"system",   usage:"whoami", desc:"Show the signed-in operator"},
+  date:      {grp:"system",   usage:"date", desc:"Show server date and time"},
+  history:   {grp:"system",   usage:"history", desc:"Show commands run this session"},
+  audit:     {grp:"system",   usage:"audit", desc:"Show the audit log for this session"},
+  exit:      {grp:"system",   usage:"exit", desc:"Close the terminal window"},
+
+  open:      {grp:"accounts", usage:"open", desc:"Open a new account (step-by-step wizard)"},
+  ls:        {grp:"accounts", usage:"ls", desc:"List all accounts"},
+  show:      {grp:"accounts", usage:"show <account>", desc:"Show the full structure of an account"},
+  update:    {grp:"accounts", usage:"update <account> <field> <value>", desc:"Update a field: " + Object.keys(UPDATABLE).join(", ")},
+  validate:  {grp:"accounts", usage:"validate <account_number>", desc:"Check an account number (digits only)"},
+  freeze:    {grp:"accounts", usage:"freeze <account>", desc:"Freeze an account (blocks debits and credits)"},
+  unfreeze:  {grp:"accounts", usage:"unfreeze <account>", desc:"Lift a freeze"},
+  close:     {grp:"accounts", usage:"close <account>", desc:"Close an account with a zero balance"},
+
+  balance:   {grp:"money",    usage:"balance <account>", desc:"Show available balance"},
+  deposit:   {grp:"money",    usage:"deposit <account> <amount> [note]", desc:"Credit funds (amount: 5000, 2.5L, 1cr)"},
+  withdraw:  {grp:"money",    usage:"withdraw <account> <amount> [note]", desc:"Debit funds"},
+  transfer:  {grp:"money",    usage:"transfer <from> <to> <amount> [NEFT|RTGS|IMPS]", desc:"Move funds between accounts"},
+  statement: {grp:"money",    usage:"statement <account> [n]", desc:"Last n ledger entries (default 10)"},
+  export:    {grp:"money",    usage:"export <account>", desc:"Download the statement as CSV"},
+
+  fd:        {grp:"products", usage:"fd <account> <amount> <months> [rate]", desc:"Book a fixed deposit from an account"},
+  cheque:    {grp:"products", usage:"cheque <account> [leaves]", desc:"Issue a cheque book (25 / 50 / 100 leaves)"},
+  card:      {grp:"products", usage:"card <account> issue|block|list", desc:"Issue, block, or list debit cards"},
+  limit:     {grp:"products", usage:"limit <account> <amount>", desc:"Set the daily transaction limit"},
+  kyc:       {grp:"products", usage:"kyc <account> [verified|pending|rejected]", desc:"Show or set KYC status"},
+
+  emi:       {grp:"tools",    usage:"emi <principal> <annual_rate> <months>", desc:"Loan EMI calculator"},
+  interest:  {grp:"tools",    usage:"interest <principal> <annual_rate> <days>", desc:"Simple interest calculator"},
+  rd:        {grp:"tools",    usage:"rd <monthly> <annual_rate> <months>", desc:"Recurring deposit maturity"},
+  ifsc:      {grp:"tools",    usage:"ifsc <code>", desc:"Validate an IFSC code format"},
+  fx:        {grp:"tools",    usage:"fx <amount> <from> <to>", desc:"Convert currency (INR, USD, EUR, GBP…)"},
+};
+
+const HANDLERS = {
+  help(args){
+    if(args[0]){
+      const c = COMMANDS[args[0]];
+      if(!c) return out(`help: no such command '${args[0]}'`, 'err');
+      out(c.usage, 'hi'); out('  ' + c.desc); return;
+    }
+    const groups = {system:"SYSTEM", accounts:"ACCOUNTS", money:"MONEY MOVEMENT", products:"PRODUCTS & SERVICES", tools:"CALCULATORS & TOOLS"};
+    Object.entries(groups).forEach(([g,label])=>{
+      out(''); out(label, 'hi');
+      Object.entries(COMMANDS).filter(([,c])=>c.grp === g).forEach(([,c])=>outHTML(`  <span class="c-pr">${esc(c.usage.padEnd(48))}</span><span class="c-dim">${esc(c.desc)}</span>`));
+    });
+    out(''); out("Accounts can be referenced by id (ACC-0301), full account number, or last 4 digits.", 'dim');
+    out("Tab completes commands · ↑/↓ browse history · Ctrl+L clears · Ctrl+C cancels a wizard", 'dim');
+  },
+  clear(){ document.getElementById('tw-out').innerHTML = ''; },
+  whoami(){ out(document.getElementById('user-name-display').textContent + '  (role: Administrator, session: browser-local)'); },
+  date(){ out(new Date().toString()); },
+  history(){ termState.history.forEach((h,i)=>out(String(i+1).padStart(4) + '  ' + h)); },
+  audit(){ if(!termState.audit.length) return out('audit log empty', 'dim'); termState.audit.forEach(l=>out(l)); },
+  exit(){ closeTerminal(); },
+
+  open(){
+    termState.wizard = {step:0, data:{}};
+    out('Opening a new account. Press Ctrl+C to cancel at any time.', 'hi');
+    askWizard();
+  },
+  ls(){
+    table(["ID","ACCOUNT NO","NAME","TYPE","BALANCE","STATUS"],
+      accounts.map(a=>[a.id, groupAcc(a.accNo), a.name, a.type, a.balance, a.frozen ? 'Frozen' : a.status]));
+    out(`${accounts.length} accounts`, 'dim');
+  },
+  show(args){
+    const a = needAccount(args[0]); if(!a) return;
+    out(`${a.name} · ${a.id}`, 'hi');
+    kvOut([["account_number", groupAcc(a.accNo)],["holder", a.holder],["type", a.type],["balance", a.balance],["ifsc", a.ifsc],["branch", a.branch],
+      ["kyc", a.kyc],["daily_limit", fmtINR(a.limit)],["status", a.frozen ? 'Frozen' : a.status],["opened", a.opened],
+      ["fixed_deposits", String(a.deposits.length)],["cards", a.cards.map(c=>`${c.no} (${c.status})`).join(', ') || '—'],["cheque_books", String(a.cheques.length)],
+      ["ledger_entries", String(a.ledger.length)]]);
+  },
+  update(args){
+    const [q, field, ...rest] = args;
+    if(!q || !field || !rest.length) return usage('update');
+    const a = needAccount(q); if(!a) return;
+    const f = field.toLowerCase();
+    if(!UPDATABLE[f]) return out(`error: unknown field '${field}'. fields: ${Object.keys(UPDATABLE).join(', ')}`, 'err');
+    let v = rest.join(' ');
+    if(f === 'type'){ const t = ACC_TYPES.find(t=>t.toLowerCase() === v.toLowerCase()); if(!t) return out('error: type must be one of ' + ACC_TYPES.join(', '), 'err'); v = t; }
+    if(f === 'ifsc'){ v = v.toUpperCase(); if(!ifscValid(v)) return out('error: IFSC must look like ABCD0123456', 'err'); }
+    if(f === 'limit'){ const n = parseAmount(v); if(isNaN(n)) return out('error: invalid amount', 'err'); v = n; }
+    if(f === 'status'){ const s = ["Active","Dormant","Under review"].find(s=>s.toLowerCase() === v.toLowerCase()); if(!s) return out('error: status must be Active, Dormant or Under review', 'err'); v = s; }
+    if(f === 'kyc'){ const s = ["Verified","Pending","Rejected"].find(s=>s.toLowerCase() === v.toLowerCase()); if(!s) return out('error: kyc must be Verified, Pending or Rejected', 'err'); v = s; }
+    const old = f === 'limit' ? fmtINR(a[f]) : a[f];
+    a[f] = v;
+    out(`✓ ${a.id} ${UPDATABLE[f]}: ${old} → ${f === 'limit' ? fmtINR(v) : v}`, 'ok');
+    audit(`update ${a.id} ${f}`); refreshAccounts();
+  },
+  validate(args){
+    const no = (args.join('')).replace(/\s/g,'');
+    if(!no) return usage('validate');
+    if(!accNoValid(no)) return out('✗ invalid — account number must contain digits only', 'err');
+    const a = accounts.find(x=>x.accNo === no);
+    out('✓ valid account number' + (a ? ` — belongs to ${a.id} (${a.name})` : ' — not yet in use'), 'ok');
+  },
+  freeze(args){
+    const a = needAccount(args[0]); if(!a) return;
+    if(a.frozen) return out(`${a.id} is already frozen`, 'warn');
+    a.frozen = true; out(`✓ ${a.id} frozen. Debits and credits are blocked.`, 'ok'); audit(`freeze ${a.id}`); refreshAccounts();
+  },
+  unfreeze(args){
+    const a = needAccount(args[0]); if(!a) return;
+    if(!a.frozen) return out(`${a.id} is not frozen`, 'warn');
+    a.frozen = false; out(`✓ ${a.id} unfrozen.`, 'ok'); audit(`unfreeze ${a.id}`); refreshAccounts();
+  },
+  close(args){
+    const a = needAccount(args[0]); if(!a) return;
+    if(a.status === 'Closed') return out(`${a.id} is already closed`, 'warn');
+    if(parseINR(a.balance) !== 0) return out(`error: balance is ${a.balance}. Transfer or withdraw it before closing.`, 'err');
+    a.status = 'Closed'; out(`✓ ${a.id} closed.`, 'ok'); audit(`close ${a.id}`); refreshAccounts();
+  },
+
+  balance(args){
+    const a = needAccount(args[0]); if(!a) return;
+    out(`${a.id}  ${maskAcc(a.accNo)}  available: ${a.balance}`, 'hi');
+  },
+  deposit(args){ moveOne(args, 'deposit'); },
+  withdraw(args){ moveOne(args, 'withdraw'); },
+  transfer(args){
+    const [f, t, amt, mode='IMPS'] = args;
+    if(!f || !t || !amt) return usage('transfer');
+    const from = needAccount(f); if(!from) return; const to = needAccount(t); if(!to) return;
+    if(from === to) return out('error: source and destination are the same', 'err');
+    if(!needActive(from) || !needActive(to)) return;
+    const n = parseAmount(amt); if(!(n > 0)) return out('error: invalid amount', 'err');
+    const m = mode.toUpperCase();
+    if(!["NEFT","RTGS","IMPS","INTERNAL"].includes(m)) return out('error: mode must be NEFT, RTGS, IMPS or INTERNAL', 'err');
+    if(m === 'RTGS' && n < 200000) return out('error: RTGS minimum is ₹2,00,000', 'err');
+    if(m === 'IMPS' && n > 500000) return out('error: IMPS maximum is ₹5,00,000 — use NEFT or RTGS', 'err');
+    if(n > a_limit(from)) return out(`error: exceeds daily limit of ${fmtINR(from.limit)}`, 'err');
+    if(n > parseINR(from.balance)) return out(`error: insufficient funds (available ${from.balance})`, 'err');
+    const e = postEntry(from, `${m} to ${to.id}`, n, 0);
+    postEntry(to, `${m} from ${from.id}`, 0, n);
+    out(`✓ ${fmtINR(n)} sent ${from.id} → ${to.id} via ${m}  ref ${e.ref}`, 'ok');
+    out(`  ${from.id} balance ${from.balance}  ·  ${to.id} balance ${to.balance}`, 'dim');
+    audit(`transfer ${fmtINR(n)} ${from.id}→${to.id} ${m}`); refreshAccounts();
+  },
+  statement(args){
+    const a = needAccount(args[0]); if(!a) return;
+    const n = parseInt(args[1]) || 10;
+    out(`Statement · ${a.id} · ${maskAcc(a.accNo)}`, 'hi');
+    table(["DATE","DESCRIPTION","DEBIT","CREDIT","BALANCE","REF"],
+      a.ledger.slice(-n).map(e=>[e.date, e.desc, e.dr ? fmtINR(e.dr) : '', e.cr ? fmtINR(e.cr) : '', fmtINR(e.bal), e.ref]));
+  },
+  export(args){
+    const a = needAccount(args[0]); if(!a) return;
+    const csv = "date,description,debit,credit,balance,ref\n" + a.ledger.map(e=>[e.date, `"${e.desc.replace(/"/g,'""')}"`, e.dr, e.cr, e.bal, e.ref].join(',')).join('\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    link.download = `${a.id}-statement.csv`; link.click();
+    setTimeout(()=>URL.revokeObjectURL(link.href), 1000);
+    out(`✓ wrote ${a.id}-statement.csv (${a.ledger.length} rows)`, 'ok');
+  },
+
+  fd(args){
+    const [q, amt, months, rate='7.1'] = args;
+    if(!q || !amt || !months) return usage('fd');
+    const a = needAccount(q); if(!a || !needActive(a)) return;
+    const n = parseAmount(amt), m = parseInt(months), r = parseFloat(rate);
+    if(!(n > 0) || !(m > 0) || !(r > 0)) return out('error: amount, months and rate must be positive', 'err');
+    if(n > parseINR(a.balance)) return out(`error: insufficient funds (available ${a.balance})`, 'err');
+    const maturity = n * Math.pow(1 + r/400, m/3);
+    const id = 'FD-' + String(1000 + a.deposits.length + Math.floor(Math.random()*8000));
+    a.deposits.push({id, amount:n, months:m, rate:r, maturity});
+    postEntry(a, `Fixed deposit ${id} booked`, n, 0);
+    out(`✓ ${id} booked: ${fmtINR(n)} for ${m} months at ${r}% (quarterly compounding)`, 'ok');
+    out(`  maturity value ${fmtINR(maturity.toFixed(2))}  ·  interest earned ${fmtINR((maturity-n).toFixed(2))}`, 'dim');
+    audit(`fd ${id} ${a.id}`); refreshAccounts();
+  },
+  cheque(args){
+    const a = needAccount(args[0]); if(!a || !needActive(a)) return;
+    const leaves = parseInt(args[1]) || 25;
+    if(![25,50,100].includes(leaves)) return out('error: leaves must be 25, 50 or 100', 'err');
+    const start = 100001 + a.cheques.reduce((s,c)=>s+c.leaves, 0);
+    a.cheques.push({leaves, from:start});
+    out(`✓ cheque book issued for ${a.id}: ${leaves} leaves, #${start}–#${start+leaves-1}. Dispatch to ${a.branch} branch.`, 'ok');
+    audit(`cheque ${a.id} ${leaves}`);
+  },
+  card(args){
+    const [q, action='list'] = args;
+    const a = needAccount(q); if(!a) return;
+    if(action === 'list'){
+      if(!a.cards.length) return out(`no cards on ${a.id}`, 'dim');
+      return table(["CARD","STATUS","ISSUED"], a.cards.map(c=>[c.no, c.status, c.issued]));
+    }
+    if(action === 'issue'){
+      if(!needActive(a)) return;
+      const no = '4' + String(Math.floor(Math.random()*1e3)).padStart(3,'0') + ' XXXX XXXX ' + String(Math.floor(Math.random()*1e4)).padStart(4,'0');
+      a.cards.push({no, status:'Active', issued:todayStr()});
+      out(`✓ debit card ${no} issued on ${a.id}`, 'ok'); audit(`card issue ${a.id}`); return;
+    }
+    if(action === 'block'){
+      const c = a.cards.find(c=>c.status === 'Active');
+      if(!c) return out(`no active card on ${a.id}`, 'warn');
+      c.status = 'Blocked'; out(`✓ card ${c.no} blocked`, 'ok'); audit(`card block ${a.id}`); return;
+    }
+    usage('card');
+  },
+  limit(args){
+    if(args.length < 2) return usage('limit');
+    HANDLERS.update([args[0], 'limit', args[1]]);
+  },
+  kyc(args){
+    const a = needAccount(args[0]); if(!a) return;
+    if(!args[1]) return out(`${a.id} KYC: ${a.kyc}`, a.kyc === 'Verified' ? 'ok' : 'warn');
+    HANDLERS.update([args[0], 'kyc', args[1]]);
+  },
+
+  emi(args){
+    const P = parseAmount(args[0]), r = parseFloat(args[1]) / 1200, n = parseInt(args[2]);
+    if(!(P > 0) || !(r > 0) || !(n > 0)) return usage('emi');
+    const emi = P * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
+    kvOut([["monthly_emi", fmtINR(emi.toFixed(2))],["total_payable", fmtINR((emi*n).toFixed(2))],["total_interest", fmtINR((emi*n-P).toFixed(2))]]);
+  },
+  interest(args){
+    const P = parseAmount(args[0]), r = parseFloat(args[1]), d = parseInt(args[2]);
+    if(!(P > 0) || !(r > 0) || !(d > 0)) return usage('interest');
+    const i = P * r * d / 36500;
+    kvOut([["interest", fmtINR(i.toFixed(2))],["total", fmtINR((P+i).toFixed(2))]]);
+  },
+  rd(args){
+    const M = parseAmount(args[0]), r = parseFloat(args[1]) / 400, n = parseInt(args[2]);
+    if(!(M > 0) || !(r > 0) || !(n > 0)) return usage('rd');
+    let mat = 0; for(let k=1; k<=n; k++) mat += M * Math.pow(1 + r, k/3);
+    kvOut([["invested", fmtINR(M*n)],["maturity_value", fmtINR(mat.toFixed(2))],["interest_earned", fmtINR((mat-M*n).toFixed(2))]]);
+  },
+  ifsc(args){
+    if(!args[0]) return usage('ifsc');
+    const c = args[0].toUpperCase();
+    if(!ifscValid(c)) return out(`✗ ${c} is not a valid IFSC (format: 4 letters, 0, 6 alphanumerics)`, 'err');
+    out(`✓ ${c} — bank code ${c.slice(0,4)}, branch code ${c.slice(5)}`, 'ok');
+  },
+  fx(args){
+    const n = parseAmount(args[0]); const f = (args[1]||'').toUpperCase(), t = (args[2]||'').toUpperCase();
+    if(!(n >= 0) || !symbols[f] || !symbols[t]) return out('usage: fx <amount> <from> <to>   currencies: ' + Object.keys(symbols).join(' '), 'warn');
+    out(`${symbols[f]}${n.toLocaleString()} ${f} = ${symbols[t]}${convertOne(n, f, t).toLocaleString(undefined,{maximumFractionDigits:2})} ${t}`, 'hi');
+  },
+};
+function a_limit(a){ return Number(a.limit) || Infinity; }
+function moveOne(args, kind){
+  const [q, amt, ...note] = args;
+  if(!q || !amt) return usage(kind);
+  const a = needAccount(q); if(!a || !needActive(a)) return;
+  const n = parseAmount(amt); if(!(n > 0)) return out('error: invalid amount (try 5000, 2.5L, 1cr)', 'err');
+  if(kind === 'withdraw'){
+    if(n > a_limit(a)) return out(`error: exceeds daily limit of ${fmtINR(a.limit)}`, 'err');
+    if(n > parseINR(a.balance)) return out(`error: insufficient funds (available ${a.balance})`, 'err');
+  }
+  const desc = note.join(' ') || (kind === 'deposit' ? 'Cash deposit' : 'Cash withdrawal');
+  const e = kind === 'deposit' ? postEntry(a, desc, 0, n) : postEntry(a, desc, n, 0);
+  out(`✓ ${kind === 'deposit' ? 'credited' : 'debited'} ${fmtINR(n)} ${kind === 'deposit' ? 'to' : 'from'} ${a.id}  ref ${e.ref}  new balance ${a.balance}`, 'ok');
+  audit(`${kind} ${fmtINR(n)} ${a.id}`); refreshAccounts();
+}
+
+/* ---- open-account wizard ---- */
+const WIZARD = [
+  {key:"holder", q:"holder name", check:v=>v.length >= 2 || "enter at least 2 characters"},
+  {key:"name", q:"account name", def:d=>`${d.holder} A/c`, check:v=>v.length >= 2 || "enter at least 2 characters"},
+  {key:"type", q:"account type [" + ACC_TYPES.slice(0,7).join("/") + "…]", def:()=>"Savings", check:v=>!!ACC_TYPES.find(t=>t.toLowerCase() === v.toLowerCase()) || "unknown type", map:v=>ACC_TYPES.find(t=>t.toLowerCase() === v.toLowerCase())},
+  {key:"accNo", q:"account number (digits only, blank = generate)", def:()=>randomAccNo(), check:v=>checkNewAccNo(v), map:v=>v.replace(/\s/g,'')},
+  {key:"ifsc", q:"IFSC", def:()=>"CORE0000301", check:v=>ifscValid(v) || "format must be ABCD0123456", map:v=>v.toUpperCase()},
+  {key:"branch", q:"branch", def:()=>"Mumbai Main", check:()=>true},
+  {key:"deposit", q:"opening deposit ₹", def:()=>"0", check:v=>parseAmount(v) >= 0 || "invalid amount", map:v=>parseAmount(v)},
+];
+function checkNewAccNo(v){
+  const no = v.replace(/\s/g,'');
+  if(!no) return "enter an account number or use the generate button";
+  if(!accNoValid(no)) return "must contain digits only";
+  if(accounts.some(a=>a.accNo === no)) return "account number already in use";
+  return true;
+}
+function askWizard(){
+  const w = termState.wizard, s = WIZARD[w.step];
+  const def = s.def ? s.def(w.data) : '';
+  w.pendingDef = def;
+  setPrompt(`  ${s.q}${def ? ` (${def})` : ''}:`);
+}
+function answerWizard(raw){
+  const w = termState.wizard, s = WIZARD[w.step];
+  const v = raw.trim() || w.pendingDef || '';
+  outHTML(`<span class="c-pr">  ${esc(s.q)}:</span> ${esc(v)}`);
+  const ok = s.check(v);
+  if(ok !== true) { out('  ✗ ' + ok, 'err'); return askWizard(); }
+  w.data[s.key] = s.map ? s.map(v) : v;
+  w.step++;
+  if(w.step < WIZARD.length) return askWizard();
+  termState.wizard = null; setPrompt();
+  createAccount(w.data);
+}
+function createAccount(d){
+  let id = 'ACC-' + d.accNo.slice(-4);
+  while(accounts.some(a=>a.id === id)) id = 'ACC-' + String(Math.floor(Math.random()*9000)+1000);
+  const a = {id, name:d.name, type:d.type, balance:fmtINR(0), opened:todayStr(), status:"Active",
+    accNo:d.accNo, holder:d.holder, ifsc:d.ifsc, branch:d.branch, kyc:"Pending", limit:1000000,
+    frozen:false, cards:[], cheques:[], deposits:[], ledger:[]};
+  accounts.push(a);
+  postEntry(a, "Account opened", 0, 0);
+  if(d.deposit > 0) postEntry(a, "Opening deposit", 0, d.deposit);
+  out(`✓ account created`, 'ok');
+  kvOut([["id", a.id],["account_number", groupAcc(a.accNo)],["holder", a.holder],["type", a.type],["ifsc", a.ifsc],["balance", a.balance],["kyc", a.kyc + "  (run 'kyc " + a.id + " verified' once documents are checked)"]]);
+  audit(`open ${a.id}`); refreshAccounts();
+  return a;
+}
+
+/* ---- prompt / input ---- */
+function setPrompt(text){
+  const p = document.getElementById('tw-prompt');
+  if(text) p.innerHTML = `<span class="c-warn">${esc(text)}</span>`;
+  else p.innerHTML = 'operator@core-server:<span class="path">~/accounts</span>$';
+}
+function tokenize(line){
+  const out = []; const re = /"([^"]*)"|'([^']*)'|(\S+)/g; let m;
+  while((m = re.exec(line))) out.push(m[1] ?? m[2] ?? m[3]);
+  return out;
+}
+function runCommand(line){
+  if(termState.wizard) return answerWizard(line);
+  const trimmed = line.trim();
+  outHTML(`<span class="c-pr">operator@core-server:</span><span class="c-hi">~/accounts</span><span class="c-pr">$</span> <span class="c-cmd">${esc(trimmed)}</span>`);
+  if(!trimmed) return;
+  termState.history.push(trimmed); termState.hIdx = termState.history.length;
+  const [cmd, ...args] = tokenize(trimmed);
+  const alias = {accounts:"ls", list:"ls", man:"help", "?":"help", cls:"clear", new:"open", "add":"open", info:"show", bal:"balance", stmt:"statement", send:"transfer"};
+  const name = (alias[cmd.toLowerCase()] || cmd.toLowerCase());
+  if(!HANDLERS[name]) return out(`bash: ${cmd}: command not found — type 'help'`, 'err');
+  try { HANDLERS[name](args); } catch(err){ out('error: ' + err.message, 'err'); }
+}
+
+document.getElementById('tw-input').addEventListener('keydown', e=>{
+  const inp = e.target;
+  if(e.key === 'Enter'){ const v = inp.value; inp.value = ''; runCommand(v); }
+  else if(e.key === 'ArrowUp' && !termState.wizard){ e.preventDefault(); if(termState.hIdx > 0) inp.value = termState.history[--termState.hIdx]; }
+  else if(e.key === 'ArrowDown' && !termState.wizard){ e.preventDefault(); termState.hIdx = Math.min(termState.history.length, termState.hIdx+1); inp.value = termState.history[termState.hIdx] || ''; }
+  else if(e.key === 'Tab'){
+    e.preventDefault();
+    if(termState.wizard || inp.value.includes(' ')) return;
+    const m = Object.keys(COMMANDS).filter(c=>c.startsWith(inp.value.toLowerCase()));
+    if(m.length === 1) inp.value = m[0] + ' ';
+    else if(m.length > 1) out(m.join('   '), 'dim');
+  }
+  else if(e.key === 'l' && e.ctrlKey){ e.preventDefault(); HANDLERS.clear(); }
+  else if(e.key === 'c' && e.ctrlKey && !window.getSelection().toString()){
+    e.preventDefault();
+    if(termState.wizard){ termState.wizard = null; setPrompt(); out('^C  account opening cancelled', 'warn'); }
+    else { out('^C', 'dim'); inp.value = ''; }
+  }
+});
+
+/* ---- account number boxes ---- */
+function buildAccBoxes(rowId){
+  const row = document.getElementById(rowId);
+  row.innerHTML = `<input class="acbox" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="Account number">`;
+  const box = row.querySelector('.acbox');
+  box.addEventListener('input', ()=>{ box.value = box.value.replace(/\D/g,''); syncAccBoxes(); });
+}
+function readAccBoxes(rowId){ return document.querySelector(`#${rowId} .acbox`).value; }
+function fillAccBoxes(rowId, no){ document.querySelector(`#${rowId} .acbox`).value = no; }
+function syncAccBoxes(){
+  const a = readAccBoxes('acno-row'), b = readAccBoxes('acno2-row');
+  document.querySelectorAll('.acbox').forEach(x=>x.classList.toggle('filled', !!x.value));
+  const r1 = document.getElementById('acno-row'), r2 = document.getElementById('acno2-row');
+  const s1 = document.getElementById('acno-st'), s2 = document.getElementById('acno2-st');
+  const chk = a.length ? checkNewAccNo(a) : null;
+  r1.classList.toggle('ok', chk === true); r1.classList.toggle('bad', !!a.length && chk !== true);
+  s1.className = 'st' + (chk === true ? ' ok' : a.length ? ' bad' : '');
+  s1.textContent = !a.length ? '0 digits' : chk === true ? `✓ valid · ${a.length} digits` : '✗ ' + chk;
+  const match = !!b.length && a === b;
+  r2.classList.toggle('ok', match); r2.classList.toggle('bad', !!b.length && !match);
+  s2.className = 'st' + (match ? ' ok' : b.length ? ' bad' : '');
+  s2.textContent = !b.length ? 're-enter to confirm' : match ? '✓ matches' : '✗ does not match';
+}
+function generateAccNo(){ const no = randomAccNo(); fillAccBoxes('acno-row', no); fillAccBoxes('acno2-row', no); syncAccBoxes(); }
+function clearAccBoxes(){ fillAccBoxes('acno-row', ''); fillAccBoxes('acno2-row', ''); syncAccBoxes(); document.querySelector('#acno-row .acbox').focus(); }
+
+function submitAccountForm(){
+  const err = document.getElementById('tw-err'); err.textContent = '';
+  const accNo = readAccBoxes('acno-row'), confirm = readAccBoxes('acno2-row');
+  const val = id=>document.getElementById(id).value.trim();
+  const d = {holder:val('f-holder'), name:val('f-name'), type:val('f-type'), ifsc:val('f-ifsc').toUpperCase() || 'CORE0000301',
+    branch:val('f-branch') || 'Mumbai Main', deposit:val('f-deposit') ? parseAmount(val('f-deposit')) : 0, accNo};
+  if(!d.name) d.name = d.holder ? `${d.holder} A/c` : '';
+  const chk = checkNewAccNo(accNo);
+  const problem = chk !== true ? 'account_number: ' + chk
+    : confirm !== accNo ? 'confirm_account_number does not match'
+    : d.holder.length < 2 ? 'holder_name is required'
+    : !ifscValid(d.ifsc) ? 'ifsc must look like ABCD0123456'
+    : isNaN(d.deposit) ? 'opening_deposit is not a valid amount' : null;
+  if(problem){ err.textContent = '✗ ' + problem; return; }
+  if(termState.wizard){ termState.wizard = null; setPrompt(); }
+  outHTML(`<span class="c-pr">operator@core-server:</span><span class="c-hi">~/accounts</span><span class="c-pr">$</span> <span class="c-cmd">./create-account --holder "${esc(d.holder)}" --type ${esc(d.type)} --acno ${esc(accNo)} --commit</span>`);
+  createAccount(d);
+  ['f-holder','f-name','f-deposit','f-ifsc','f-branch'].forEach(id=>document.getElementById(id).value = '');
+  fillAccBoxes('acno-row',''); fillAccBoxes('acno2-row',''); syncAccBoxes();
+}
+
+/* ---- window ---- */
+const QUICK_OPTS = [
+  ["accounts", [["open","guided new account"],["ls","list all accounts"],["show ","inspect structure"],["update ","change a field"]]],
+  ["money", [["balance ","check balance"],["deposit ","credit funds"],["withdraw ","debit funds"],["transfer ","NEFT / RTGS / IMPS"],["statement ","ledger entries"],["export ","download CSV"]]],
+  ["services", [["fd ","fixed deposit"],["cheque ","cheque book"],["card  issue","debit card"],["kyc ","KYC status"],["freeze ","freeze account"],["limit ","daily limit"]]],
+  ["tools", [["emi 500000 9.5 36","loan EMI"],["rd 10000 7 24","recurring deposit"],["fx 100000 INR USD","currency"],["help","all commands"]]],
+];
+function initTerminal(){
+  if(termState.booted) return;
+  termState.booted = true;
+  document.getElementById('f-type').innerHTML = ACC_TYPES.map(t=>`<option>${t}</option>`).join('');
+  buildAccBoxes('acno-row'); buildAccBoxes('acno2-row'); syncAccBoxes();
+  document.getElementById('tw-opts').innerHTML = QUICK_OPTS.map(([g, items])=>
+    `<div class="tw-opt-grp">// ${g}</div>` + items.map(([cmd, d])=>
+      `<button class="tw-opt" onclick="loadCommand('${cmd}')"><b>$ ${esc(cmd.trim().split(' ')[0])}</b><span>${esc(d)}</span></button>`).join('')).join('');
+  out('Core Server banking shell v2.7.0 — accounts module', 'hi');
+  out(`Last login: ${new Date().toLocaleString('en-GB')} on tty1`, 'dim');
+  out("Demo build: runs in this browser tab only, no real funds move and changes reset on reload.", 'warn');
+  out("Type 'help' for all banking options or 'open' to add an account.", 'dim');
+  out('');
+  makeDraggable();
+}
+function loadCommand(cmd){
+  const inp = document.getElementById('tw-input');
+  if(cmd === 'open' || cmd === 'ls' || cmd === 'help' || /\d/.test(cmd)) { runCommand(cmd); inp.focus(); return; }
+  inp.value = cmd.includes('  ') ? cmd.replace('  ', ' ACC-0301 ') : cmd + 'ACC-0301 ';
+  inp.focus();
+}
+function openTerminal(){
+  initTerminal();
+  document.getElementById('tw-backdrop').classList.add('show');
+  setTimeout(()=>document.getElementById('tw-input').focus(), 30);
+}
+function closeTerminal(){ document.getElementById('tw-backdrop').classList.remove('show'); }
+function toggleMaxTerminal(){
+  const w = document.getElementById('tw');
+  w.classList.toggle('max');
+  if(w.classList.contains('max')) Object.assign(w.style, {left:'', top:'', transform:''});
+}
+function makeDraggable(){
+  const w = document.getElementById('tw'), bar = document.getElementById('tw-bar');
+  let sx, sy, ox, oy, drag = false;
+  bar.addEventListener('mousedown', e=>{
+    if(e.target.classList.contains('dot') || w.classList.contains('max')) return;
+    const r = w.getBoundingClientRect();
+    drag = true; sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+    Object.assign(w.style, {left:ox+'px', top:oy+'px', transform:'none'});
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if(!drag) return;
+    w.style.left = Math.max(0, Math.min(window.innerWidth - 120, ox + e.clientX - sx)) + 'px';
+    w.style.top = Math.max(0, Math.min(window.innerHeight - 40, oy + e.clientY - sy)) + 'px';
+  });
+  document.addEventListener('mouseup', ()=>{ drag = false; });
+  bar.addEventListener('dblclick', e=>{ if(!e.target.classList.contains('dot')) toggleMaxTerminal(); });
+}
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && document.getElementById('tw-backdrop').classList.contains('show')) closeTerminal(); });
 </script>
 </body>
 </html>
