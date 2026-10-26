@@ -502,8 +502,9 @@
       <div class="hero card">
         <div>
           <div class="label">Total Balance (INR) <span class="debit-flag">All entries debited</span></div>
-          <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span> <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
-          <div class="words" id="dash-words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
+          <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span></div>
+          <div class="words" id="dash-sent" style="color:var(--red);"></div>
+          <div class="words" id="dash-words">In words: One hundred thirty-seven crore seventy-four lakh ninety thousand seven hundred ninety-four rupees only.</div>
         </div>
         <div class="hero-actions">
           <button class="btn primary" onclick="openDashSend()">↗ Send</button>
@@ -515,19 +516,19 @@
       <div class="stat-grid">
         <button class="stat-card card" onclick="openModal('stat-total')">
           <div class="stat-ic" style="background:rgba(91,147,255,0.15);color:var(--blue);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
-          <div class="lbl">Total Transactions</div><div class="val">8</div><div class="sub">Jan – May 2026</div>
+          <div class="lbl">Total Transactions</div><div class="val" id="st-total">8</div><div class="sub">Jan – May 2026</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-debit')">
           <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M12 19l-5-5M12 19l5-5"/></svg></div>
-          <div class="lbl">Total Debited</div><div class="val">₹39,00,00,000</div><div class="sub">100% of transactions are debits</div>
+          <div class="lbl">Total Debited</div><div class="val" id="st-debit">₹39,00,00,000</div><div class="sub">100% of transactions are debits</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-pending')">
           <div class="stat-ic" style="background:var(--amber-dim);color:var(--amber);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
-          <div class="lbl">Pending</div><div class="val">4</div><div class="sub">Awaiting confirmation</div>
+          <div class="lbl">Pending</div><div class="val" id="st-pending">4</div><div class="sub">Awaiting confirmation</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-failed')">
           <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg></div>
-          <div class="lbl">Failed</div><div class="val">1</div><div class="sub">Unsuccessful transactions</div>
+          <div class="lbl">Failed</div><div class="val" id="st-failed">1</div><div class="sub">Unsuccessful transactions</div>
         </button>
       </div>
 
@@ -767,6 +768,8 @@ const accounts = [
   {id:"ACC-0044", name:"Fee Collection",          type:"Revenue",   balance:"₹98,44,120", opened:"20 Jun 2022", status:"Active"},
   {id:"ACC-0500", name:"Reconciliation Suspense", type:"Suspense",  balance:"₹2,00,00,000", opened:"14 Sep 2023", status:"Under review"},
   {id:"ACC-0600", name:"Reserve Account",         type:"Reserve",   balance:"₹58,20,00,000", opened:"14 Sep 2023", status:"Active"},
+  {id:"ACC-0701", name:"SHREE GURU GANGADHARA SMS TRUST", type:"Savings", balance:"₹0", opened:"26 Oct 2026", status:"Active",
+   accNo:"50200084015808", holder:"Shree shiva jogy", ifsc:"HDFC0008424", branch:"HDFC Bank, Sadasivapet Branch"},
 ];
 
 const clients = [
@@ -783,7 +786,7 @@ const statDetails = {
   "stat-debit": {title:"Total Debited", rows:[["Total debited","₹39,00,00,000"],["Share of transactions","8 of 8 (100%)"],["Largest single debit","₹10,00,00,000 · 08 Jan"],["Smallest single debit","₹1,00,00,000 · 09 Mar"],["Note","No credit entries in this period"]]},
   "stat-pending": {title:"Pending Transactions", rows:[["Count","4"],["Share of total","50.0%"],["Value held","₹13,00,00,000"],["Oldest pending","Client Settlement · 27 Jan"],["Reason","Awaiting bank confirmation or batch run"]]},
   "stat-failed": {title:"Failed Transactions", rows:[["Count","1"],["Share of total","12.5%"],["Value affected","₹6,00,00,000"],["Reference","TX-90199-D"],["Reason","Bank returned: invalid IFSC"]]},
-  "send": {title:"Send funds", rows:[["Status","Demo action — no funds move"],["Available balance","₹1,37,74,90,794 Cr"],["Default source","Operating / 0301"],["Approval required","Yes, 2 signatories"]]},
+  "send": {title:"Send funds", rows:[["Status","Demo action — no funds move"],["Available balance","₹1,37,74,90,794"],["Default source","Operating / 0301"],["Approval required","Yes, 2 signatories"]]},
   "receive": {title:"Receive funds", rows:[["Status","Demo action — no funds move"],["Default destination","Client Escrow / 0142"],["Supported channels","NEFT, RTGS, IMPS"],["Reference format","TX-XXXXX-X"]]},
 };
 
@@ -799,6 +802,7 @@ function handleLogin(){
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderAll();
+  renderDashBalance();
   initFx();
 }
 document.getElementById('pword').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
@@ -823,14 +827,20 @@ function badge(status){
 }
 
 function renderAll(){
+  /* Stat cards follow the transaction list, so new sends are counted */
+  const set = (id, v)=>{ const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('st-total', transactions.length);
+  set('st-debit', fmtINR(transactions.reduce((sum, t)=>sum + parseINR(t.amount), 0)));
+  set('st-pending', transactions.filter(t=>t.status === 'pending').length);
+  set('st-failed', transactions.filter(t=>t.status === 'failed').length);
   document.getElementById('recent-tx-body').innerHTML = transactions.slice(0,5).map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td>
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td>
     </tr>`).join('');
 
   document.getElementById('all-tx-body').innerHTML = transactions.map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
     </tr>`).join('');
 
   document.getElementById('accounts-grid').innerHTML = accounts.map((a,i)=>`
@@ -957,7 +967,7 @@ function openModal(key){ const d = statDetails[key]; renderModal(d.title, d.rows
 function openTxModal(i){
   const t = transactions[i];
   renderModal(`${t.desc} · ${t.ref}`, [
-    ["Date", t.date],["Type","Debit"],["Amount", t.amount+" Cr"],["Status", statusLabel(t.status)],
+    ["Date", t.date],["Type","Debit"],["Amount", t.amount],["Status", statusLabel(t.status)],
     ["From", t.from],["To", t.to],["Channel", t.channel],["Note", t.note],
   ]);
 }
@@ -966,57 +976,40 @@ function openAccountModal(i){
   renderModal(`${esc(a.name)} · ${a.id}`, [["Account No.", groupAcc(a.accNo)],["Holder", esc(a.holder)],["Type", a.type],["Balance", a.balance],["IFSC", a.ifsc],["Branch", esc(a.branch)],
     ["KYC", a.kyc],["Daily limit", fmtINR(a.limit)],["Opened", a.opened],["Status", a.frozen ? 'Frozen' : a.status]]);
   document.getElementById('modal-body').insertAdjacentHTML('beforeend',
-    `<div class="modal-actions"><button class="btn primary" onclick="openSendModal(${i})">Send money</button></div>`);
+    `<div class="modal-actions"><button class="btn primary" onclick="openDashSendTo(${i}, true)">Send money</button></div>`);
 }
 
-/* ---- send money from an account ---- */
-function openSendModal(i){
-  const a = accounts[i];
-  const others = accounts.map((x,k)=>k === i ? '' : `<option value="${k}">${esc(x.name)} · ${x.id} · ${maskAcc(x.accNo)}</option>`).join('');
-  document.getElementById('modal-body').innerHTML = `
-    <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv"><span>From</span><span>${esc(a.name)} · ${maskAcc(a.accNo)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><span>Available balance</span><span id="send-bal">${a.balance}</span></div>
-    <div class="send-field"><label>To account</label><select id="send-to">${others}</select></div>
-    <div class="send-field"><label>Amount (₹)</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
-    <div class="modal-actions">
-      <button class="btn primary" onclick="submitSend(${i})">Send</button>
-      <button class="btn" onclick="openAccountModal(${i})">Back</button>
-    </div>
-    <div class="send-msg" id="send-msg"></div>`;
-  document.getElementById('modal-backdrop').classList.add('show');
-  document.getElementById('send-amt').focus();
-}
-function sendProblem(from, to, n){
-  if(!to) return 'choose a destination account';
-  if(from.status === 'Closed') return `${from.id} is closed`;
-  if(from.frozen) return `${from.id} is frozen — unfreeze it first`;
-  if(to.status === 'Closed') return `${to.id} is closed`;
-  if(to.frozen) return `${to.id} is frozen`;
-  if(!(n > 0)) return 'enter a valid amount';
-  if(n > parseINR(from.balance)) return `insufficient funds (available ${from.balance})`;
-  return null;
-}
-function submitSend(i){
-  const from = accounts[i], to = accounts[+document.getElementById('send-to').value];
-  const n = parseAmount(document.getElementById('send-amt').value.trim());
-  const msg = document.getElementById('send-msg');
-  const problem = sendProblem(from, to, n);
-  if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
-  const e = postEntry(from, `Transfer to ${to.id}`, n, 0);
-  postEntry(to, `Transfer from ${from.id}`, 0, n);
-  audit(`transfer ${fmtINR(n)} ${from.id}→${to.id}`); refreshAccounts();
-  document.getElementById('send-bal').textContent = from.balance;
-  document.getElementById('send-amt').value = '';
-  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref}`;
+/* Counts a balance figure down to its new value so the deduction is visible in the popup */
+function animatePaise(el, fromP, toP, ms = 900){
+  if(!el) return;
+  const start = performance.now(), diff = fromP - toP;
+  el.style.color = 'var(--red)';
+  (function tick(now){
+    if(!el.isConnected) return;
+    const t = Math.min(1, (now - start) / ms), eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = paiseINR(fromP - diff * BigInt(Math.round(eased * 1000)) / 1000n);
+    if(t < 1) requestAnimationFrame(tick); else { el.textContent = paiseINR(toP); setTimeout(()=>{ el.style.color = ''; }, 600); }
+  })(start);
 }
 /* ---- send money from the dashboard balance to a saved account ---- */
 /* Kept in paise as a BigInt — the dashboard total is too large for a plain Number */
-let dashPaise = 1377490794n * 10000000n * 100n;
-function dashCrText(){
-  const cr = dashPaise / 1000000000n, rem = dashPaise % 1000000000n;
-  const frac = rem ? '.' + String(rem * 100n / 1000000000n).padStart(2,'0') : '';
-  return '₹' + cr.toLocaleString('en-IN') + (frac === '.00' ? '' : frac);
+/* Saved in this browser so sends stay deducted after a reload */
+const DASH_KEY = 'core-dash-balance-v2';
+let dashPaise = 1377490794n * 100n, dashSentPaise = 0n, dashLastPaise = 0n;
+try {
+  const saved = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
+  if(saved){ dashPaise = BigInt(saved.bal); dashSentPaise = BigInt(saved.sent); dashLastPaise = BigInt(saved.last); }
+} catch(e){}
+function paiseINR(p){
+  const r = p / 100n, ps = p % 100n;
+  return '₹' + r.toLocaleString('en-IN') + (ps ? '.' + String(ps).padStart(2,'0') : '');
+}
+/* Every outgoing send reduces the dashboard balance by the same amount */
+function debitDash(n){
+  const p = BigInt(Math.round(n * 100));
+  dashPaise -= p; dashSentPaise += p; dashLastPaise = p;
+  try { localStorage.setItem(DASH_KEY, JSON.stringify({bal:String(dashPaise), sent:String(dashSentPaise), last:String(dashLastPaise)})); } catch(e){}
+  renderDashBalance();
 }
 function numberWords(n){
   const ones = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
@@ -1034,11 +1027,23 @@ function numberWords(n){
   while(n > 0n){ const chunk = Number(n % 1000n); if(chunk) parts.unshift(under1000(chunk) + (scales[i] ? ' ' + scales[i] : '')); n /= 1000n; i++; }
   return parts.join(' ');
 }
+/* Indian numbering: crore, lakh, thousand */
+function indianWords(n){
+  if(n === 0n) return 'zero';
+  const parts = [], crore = n / 10000000n; n %= 10000000n;
+  if(crore) parts.push((crore >= 100n ? indianWords(crore) : numberWords(crore)) + ' crore');
+  const lakh = n / 100000n; n %= 100000n;
+  if(lakh) parts.push(numberWords(lakh) + ' lakh');
+  if(n) parts.push(numberWords(n));
+  return parts.join(' ');
+}
 function renderDashBalance(){
-  document.getElementById('dash-amount').textContent = dashCrText();
-  const w = numberWords(dashPaise / 1000000000n);
-  document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' crore only.';
-  statDetails.send.rows[1][1] = dashCrText() + ' Cr';
+  document.getElementById('dash-amount').textContent = paiseINR(dashPaise);
+  document.getElementById('dash-sent').textContent = dashSentPaise
+    ? `Last sent: −${paiseINR(dashLastPaise)} · Total sent: −${paiseINR(dashSentPaise)}` : '';
+  const w = indianWords(dashPaise / 100n), ps = Number(dashPaise % 100n);
+  document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' rupees' + (ps ? ' and ' + indianWords(BigInt(ps)) + ' paise' : '') + ' only.';
+  statDetails.send.rows[1][1] = paiseINR(dashPaise);
 }
 function openDashSend(){
   const list = accounts.map((a,i)=>{
@@ -1050,23 +1055,25 @@ function openDashSend(){
   }).join('');
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · choose a saved account</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv" style="margin-bottom:14px;"><span>From</span><span>Dashboard balance · ${dashCrText()} Cr</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>From</span><span>Dashboard balance · ${paiseINR(dashPaise)}</span></div>
     <div class="saved-list">${list || '<div class="send-msg">No saved accounts yet — add one from Accounts.</div>'}</div>`;
   document.getElementById('modal-backdrop').classList.add('show');
 }
-function openDashSendTo(i){
+function openDashSendTo(i, fromCard){
   const a = accounts[i];
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv"><span>From</span><span>Dashboard balance</span></div>
-    <div class="kv"><span>Available</span><span id="dash-send-bal">${dashCrText()} Cr</span></div>
+    <div class="kv"><span>Available balance</span><span class="mono" id="dash-send-bal" style="font-size:18px;font-weight:600;">${paiseINR(dashPaise)}</span></div>
+    <div class="kv"><span>Calculation</span><span class="mono" id="dash-send-calc">—</span></div>
+    <div class="kv"><span>From</span><span>Main dashboard balance</span></div>
     <div class="kv"><span>To</span><span>${esc(a.name)} · ${esc(a.holder)}</span></div>
     <div class="kv"><span>Account No.</span><span class="mono">${groupAcc(a.accNo)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
+    <div class="kv"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>Daily limit</span><span>${fmtINR(a.limit)}</span></div>
     <div class="send-field"><label>Amount (₹) — e.g. 50000, 2.5L, 10cr</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
     <div class="modal-actions">
       <button class="btn primary" onclick="submitDashSend(${i})">Send</button>
-      <button class="btn" onclick="openDashSend()">Back</button>
+      <button class="btn" onclick="${fromCard ? `openAccountModal(${i})` : 'openDashSend()'}">Back</button>
     </div>
     <div class="send-msg" id="send-msg"></div>`;
   const amt = document.getElementById('send-amt');
@@ -1082,17 +1089,20 @@ function submitDashSend(i){
   if(to.status === 'Closed') problem = `${to.id} is closed`;
   else if(to.frozen) problem = `${to.id} is frozen`;
   else if(!(n > 0)) problem = 'enter a valid amount';
-  else if(paise > dashPaise) problem = `insufficient funds (available ${dashCrText()} Cr)`;
+  else if(n > a_limit(to)) problem = `exceeds daily limit of ${fmtINR(to.limit)}`;
+  else if(paise > dashPaise) problem = `insufficient funds (available ${paiseINR(dashPaise)})`;
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
-  dashPaise -= paise;
+  const before = dashPaise;
+  debitDash(n);
   const e = postEntry(to, 'Transfer from dashboard balance', 0, n);
   transactions.unshift({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
     from:"Dashboard balance", to:`${to.name} / ${to.accNo.slice(-4)}`, channel:"Internal", note:"Posted to ledger"});
   audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
-  renderDashBalance(); refreshAccounts();
-  document.getElementById('dash-send-bal').textContent = dashCrText() + ' Cr';
+  refreshAccounts();
+  animatePaise(document.getElementById('dash-send-bal'), before, dashPaise);
+  document.getElementById('dash-send-calc').textContent = `${paiseINR(before)} − ${paiseINR(paise)} = ${paiseINR(dashPaise)}`;
   document.getElementById('send-amt').value = '';
-  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref}`;
+  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref} · simulated, no real funds moved`;
 }
 function openClientModal(i){ const c = clients[i]; renderModal(`${c.name} · ${c.id}`, [["Tier", c.tier],["Linked accounts", c.accounts],["KYC status", c.kyc],["Client since", c.since]]); }
 function renderModal(title, rows){
@@ -1168,6 +1178,7 @@ function renderFxQuick(){
 /* ---------------- ADD ACCOUNT TERMINAL ---------------- */
 /* Everything here runs in the browser session only — sample data, no real funds move. */
 const ACC_TYPES = ["Savings","Current","Salary","Fixed Deposit","Recurring Deposit","NRE","NRO","Escrow","Operating","Clearing","Reserve","Revenue","Suspense"];
+const DAILY_LIMIT = 100000000; // ₹10,00,00,000 per account
 const UPDATABLE = {name:"Account name", holder:"Holder name", type:"Account type", ifsc:"IFSC", branch:"Branch", status:"Status", limit:"Daily limit", kyc:"KYC"};
 const termState = {history:[], hIdx:0, wizard:null, audit:[], booted:false};
 
@@ -1205,7 +1216,7 @@ accounts.forEach(a=>{
   const body = '50210000' + n.slice(1);
   Object.assign(a, {
     accNo: a.accNo || body + checkDigit(body), holder: a.holder || "Core Server Ltd", ifsc: a.ifsc || "CORE0000" + n.slice(1),
-    branch: a.branch || "Mumbai Main", kyc: a.kyc || "Verified", limit: a.limit || 50000000,
+    branch: a.branch || "Mumbai Main", kyc: a.kyc || "Verified", limit: a.limit || DAILY_LIMIT,
     frozen:false, cards:[], cheques:[], deposits:[], ledger: a.ledger || [{date:a.opened, desc:"Opening balance", dr:0, cr:parseINR(a.balance), bal:parseINR(a.balance), ref:"OPEN"}],
   });
 });
@@ -1405,9 +1416,12 @@ const HANDLERS = {
     if(m === 'IMPS' && n > 500000) return out('error: IMPS maximum is ₹5,00,000 — use NEFT or RTGS', 'err');
     if(n > a_limit(from)) return out(`error: exceeds daily limit of ${fmtINR(from.limit)}`, 'err');
     if(n > parseINR(from.balance)) return out(`error: insufficient funds (available ${from.balance})`, 'err');
+    if(BigInt(Math.round(n * 100)) > dashPaise) return out(`error: exceeds dashboard balance (${paiseINR(dashPaise)})`, 'err');
+    debitDash(n);
     const e = postEntry(from, `${m} to ${to.id}`, n, 0);
     postEntry(to, `${m} from ${from.id}`, 0, n);
     out(`✓ ${fmtINR(n)} sent ${from.id} → ${to.id} via ${m}  ref ${e.ref}`, 'ok');
+    out(`  dashboard balance −${fmtINR(n)} → ${paiseINR(dashPaise)}`, 'dim');
     out(`  ${from.id} balance ${from.balance}  ·  ${to.id} balance ${to.balance}`, 'dim');
     audit(`transfer ${fmtINR(n)} ${from.id}→${to.id} ${m}`); refreshAccounts();
   },
@@ -1567,7 +1581,7 @@ function createAccount(d){
   let id = 'ACC-' + d.accNo.slice(-4);
   while(accounts.some(a=>a.id === id)) id = 'ACC-' + String(Math.floor(Math.random()*9000)+1000);
   const a = {id, name:d.name, type:d.type, balance:fmtINR(0), opened:todayStr(), status:"Active",
-    accNo:d.accNo, holder:d.holder, ifsc:d.ifsc, branch:d.branch, kyc:"Pending", limit:1000000,
+    accNo:d.accNo, holder:d.holder, ifsc:d.ifsc, branch:d.branch, kyc:"Pending", limit:DAILY_LIMIT,
     frozen:false, cards:[], cheques:[], deposits:[], ledger:[]};
   accounts.push(a);
   postEntry(a, "Account opened", 0, 0);
