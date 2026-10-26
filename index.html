@@ -1108,7 +1108,7 @@ function openDashSendTo(i){
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="kv"><span>From</span><span>Dashboard balance</span></div>
-    <div class="kv"><span>Available</span><span id="dash-send-bal">${dashCrText()} Cr</span></div>
+    <div class="kv"><span>Available</span><span class="mono" id="dash-send-bal">${paiseINR(dashPaise)}</span></div>
     <div class="kv"><span>To</span><span>${esc(a.name)} · ${esc(a.holder)}</span></div>
     <div class="kv"><span>Account No.</span><span class="mono">${groupAcc(a.accNo)}</span></div>
     <div class="kv" style="margin-bottom:14px;"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
@@ -1133,13 +1133,14 @@ function submitDashSend(i){
   else if(!(n > 0)) problem = 'enter a valid amount';
   else if(paise > dashPaise) problem = `insufficient funds (available ${dashCrText()} Cr)`;
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
+  const before = dashPaise;
   debitDash(n);
   const e = postEntry(to, 'Transfer from dashboard balance', 0, n);
   transactions.unshift({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
     from:"Dashboard balance", to:`${to.name} / ${to.accNo.slice(-4)}`, channel:"Internal", note:"Posted to ledger"});
   audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
   refreshAccounts();
-  document.getElementById('dash-send-bal').textContent = dashCrText() + ' Cr';
+  animatePaise(document.getElementById('dash-send-bal'), before, dashPaise);
   document.getElementById('send-amt').value = '';
   msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref} · simulated, no real funds moved`;
 }
