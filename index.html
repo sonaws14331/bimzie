@@ -516,19 +516,19 @@
       <div class="stat-grid">
         <button class="stat-card card" onclick="openModal('stat-total')">
           <div class="stat-ic" style="background:rgba(91,147,255,0.15);color:var(--blue);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
-          <div class="lbl">Total Transactions</div><div class="val">8</div><div class="sub">Jan – May 2026</div>
+          <div class="lbl">Total Transactions</div><div class="val" id="st-total">8</div><div class="sub">Jan – May 2026</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-debit')">
           <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M12 19l-5-5M12 19l5-5"/></svg></div>
-          <div class="lbl">Total Debited</div><div class="val">₹39,00,00,000</div><div class="sub">100% of transactions are debits</div>
+          <div class="lbl">Total Debited</div><div class="val" id="st-debit">₹39,00,00,000</div><div class="sub">100% of transactions are debits</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-pending')">
           <div class="stat-ic" style="background:var(--amber-dim);color:var(--amber);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
-          <div class="lbl">Pending</div><div class="val">4</div><div class="sub">Awaiting confirmation</div>
+          <div class="lbl">Pending</div><div class="val" id="st-pending">4</div><div class="sub">Awaiting confirmation</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-failed')">
           <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg></div>
-          <div class="lbl">Failed</div><div class="val">1</div><div class="sub">Unsuccessful transactions</div>
+          <div class="lbl">Failed</div><div class="val" id="st-failed">1</div><div class="sub">Unsuccessful transactions</div>
         </button>
       </div>
 
@@ -827,14 +827,20 @@ function badge(status){
 }
 
 function renderAll(){
+  /* Stat cards follow the transaction list, so new sends are counted */
+  const set = (id, v)=>{ const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('st-total', transactions.length);
+  set('st-debit', fmtINR(transactions.reduce((sum, t)=>sum + parseINR(t.amount), 0)));
+  set('st-pending', transactions.filter(t=>t.status === 'pending').length);
+  set('st-failed', transactions.filter(t=>t.status === 'failed').length);
   document.getElementById('recent-tx-body').innerHTML = transactions.slice(0,5).map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td>
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td>
     </tr>`).join('');
 
   document.getElementById('all-tx-body').innerHTML = transactions.map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount} Cr</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
+      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
     </tr>`).join('');
 
   document.getElementById('accounts-grid').innerHTML = accounts.map((a,i)=>`
@@ -961,7 +967,7 @@ function openModal(key){ const d = statDetails[key]; renderModal(d.title, d.rows
 function openTxModal(i){
   const t = transactions[i];
   renderModal(`${t.desc} · ${t.ref}`, [
-    ["Date", t.date],["Type","Debit"],["Amount", t.amount+" Cr"],["Status", statusLabel(t.status)],
+    ["Date", t.date],["Type","Debit"],["Amount", t.amount],["Status", statusLabel(t.status)],
     ["From", t.from],["To", t.to],["Channel", t.channel],["Note", t.note],
   ]);
 }
