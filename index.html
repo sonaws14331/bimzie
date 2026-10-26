@@ -1068,7 +1068,8 @@ function openDashSendTo(i, fromCard){
     <div class="kv"><span>From</span><span>Main dashboard balance</span></div>
     <div class="kv"><span>To</span><span>${esc(a.name)} · ${esc(a.holder)}</span></div>
     <div class="kv"><span>Account No.</span><span class="mono">${groupAcc(a.accNo)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
+    <div class="kv"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>Daily limit</span><span>${fmtINR(a.limit)}</span></div>
     <div class="send-field"><label>Amount (₹) — e.g. 50000, 2.5L, 10cr</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
     <div class="modal-actions">
       <button class="btn primary" onclick="submitDashSend(${i})">Send</button>
@@ -1088,6 +1089,7 @@ function submitDashSend(i){
   if(to.status === 'Closed') problem = `${to.id} is closed`;
   else if(to.frozen) problem = `${to.id} is frozen`;
   else if(!(n > 0)) problem = 'enter a valid amount';
+  else if(n > a_limit(to)) problem = `exceeds daily limit of ${fmtINR(to.limit)}`;
   else if(paise > dashPaise) problem = `insufficient funds (available ${paiseINR(dashPaise)})`;
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
   const before = dashPaise;
@@ -1176,6 +1178,7 @@ function renderFxQuick(){
 /* ---------------- ADD ACCOUNT TERMINAL ---------------- */
 /* Everything here runs in the browser session only — sample data, no real funds move. */
 const ACC_TYPES = ["Savings","Current","Salary","Fixed Deposit","Recurring Deposit","NRE","NRO","Escrow","Operating","Clearing","Reserve","Revenue","Suspense"];
+const DAILY_LIMIT = 100000000; // ₹10,00,00,000 per account
 const UPDATABLE = {name:"Account name", holder:"Holder name", type:"Account type", ifsc:"IFSC", branch:"Branch", status:"Status", limit:"Daily limit", kyc:"KYC"};
 const termState = {history:[], hIdx:0, wizard:null, audit:[], booted:false};
 
@@ -1213,7 +1216,7 @@ accounts.forEach(a=>{
   const body = '50210000' + n.slice(1);
   Object.assign(a, {
     accNo: a.accNo || body + checkDigit(body), holder: a.holder || "Core Server Ltd", ifsc: a.ifsc || "CORE0000" + n.slice(1),
-    branch: a.branch || "Mumbai Main", kyc: a.kyc || "Verified", limit: a.limit || 50000000,
+    branch: a.branch || "Mumbai Main", kyc: a.kyc || "Verified", limit: a.limit || DAILY_LIMIT,
     frozen:false, cards:[], cheques:[], deposits:[], ledger: a.ledger || [{date:a.opened, desc:"Opening balance", dr:0, cr:parseINR(a.balance), bal:parseINR(a.balance), ref:"OPEN"}],
   });
 });
@@ -1578,7 +1581,7 @@ function createAccount(d){
   let id = 'ACC-' + d.accNo.slice(-4);
   while(accounts.some(a=>a.id === id)) id = 'ACC-' + String(Math.floor(Math.random()*9000)+1000);
   const a = {id, name:d.name, type:d.type, balance:fmtINR(0), opened:todayStr(), status:"Active",
-    accNo:d.accNo, holder:d.holder, ifsc:d.ifsc, branch:d.branch, kyc:"Pending", limit:1000000,
+    accNo:d.accNo, holder:d.holder, ifsc:d.ifsc, branch:d.branch, kyc:"Pending", limit:DAILY_LIMIT,
     frozen:false, cards:[], cheques:[], deposits:[], ledger:[]};
   accounts.push(a);
   postEntry(a, "Account opened", 0, 0);
