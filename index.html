@@ -970,34 +970,10 @@ function openAccountModal(i){
   renderModal(`${esc(a.name)} · ${a.id}`, [["Account No.", groupAcc(a.accNo)],["Holder", esc(a.holder)],["Type", a.type],["Balance", a.balance],["IFSC", a.ifsc],["Branch", esc(a.branch)],
     ["KYC", a.kyc],["Daily limit", fmtINR(a.limit)],["Opened", a.opened],["Status", a.frozen ? 'Frozen' : a.status]]);
   document.getElementById('modal-body').insertAdjacentHTML('beforeend',
-    `<div class="modal-actions"><button class="btn primary" onclick="openSendModal(${i})">Send money</button></div>`);
+    `<div class="modal-actions"><button class="btn primary" onclick="openDashSendTo(${i}, true)">Send money</button></div>`);
 }
 
-/* ---- send money from an account ---- */
-function openSendModal(i){
-  const a = accounts[i];
-  const others = accounts.map((x,k)=>k === i ? '' : `<option value="${k}">${esc(x.name)} · ${x.id} · ${maskAcc(x.accNo)}</option>`).join('');
-  document.getElementById('modal-body').innerHTML = `
-    <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv"><span>From</span><span>${esc(a.name)} · ${maskAcc(a.accNo)}</span></div>
-    <div class="kv"><span>Available balance</span><span id="send-bal">${a.balance}</span></div>
-    <div class="kv"><span>Main dashboard balance</span><span class="mono" id="send-dash-bal">${paiseINR(dashPaise)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><span>Deducted in this window</span><span class="mono" id="send-dash-cut" style="color:var(--red);">₹0</span></div>
-    <div class="send-field"><label>To account</label><select id="send-to">${others}</select></div>
-    <div class="send-field"><label>Amount (₹)</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
-    <div class="modal-actions">
-      <button class="btn primary" onclick="submitSend(${i})">Send</button>
-      <button class="btn" onclick="openAccountModal(${i})">Back</button>
-    </div>
-    <div class="send-msg" id="send-msg"></div>`;
-  document.getElementById('modal-backdrop').classList.add('show');
-  const amt = document.getElementById('send-amt');
-  amt.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitSend(i); });
-  amt.focus();
-  sendCutPaise = 0n;
-}
 /* Counts a balance figure down to its new value so the deduction is visible in the popup */
-let sendCutPaise = 0n;
 function animatePaise(el, fromP, toP, ms = 900){
   if(!el) return;
   const start = performance.now(), diff = fromP - toP;
@@ -1008,35 +984,6 @@ function animatePaise(el, fromP, toP, ms = 900){
     el.textContent = paiseINR(fromP - diff * BigInt(Math.round(eased * 1000)) / 1000n);
     if(t < 1) requestAnimationFrame(tick); else { el.textContent = paiseINR(toP); setTimeout(()=>{ el.style.color = ''; }, 600); }
   })(start);
-}
-function sendProblem(from, to, n){
-  if(!to) return 'choose a destination account';
-  if(from.status === 'Closed') return `${from.id} is closed`;
-  if(from.frozen) return `${from.id} is frozen — unfreeze it first`;
-  if(to.status === 'Closed') return `${to.id} is closed`;
-  if(to.frozen) return `${to.id} is frozen`;
-  if(!(n > 0)) return 'enter a valid amount';
-  if(n > parseINR(from.balance)) return `insufficient funds (available ${from.balance})`;
-  return null;
-}
-function submitSend(i){
-  const from = accounts[i], to = accounts[+document.getElementById('send-to').value];
-  const n = parseAmount(document.getElementById('send-amt').value.trim());
-  const msg = document.getElementById('send-msg');
-  const problem = sendProblem(from, to, n);
-  if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
-  if(BigInt(Math.round(n * 100)) > dashPaise){ msg.className = 'send-msg err'; msg.textContent = `✗ exceeds dashboard balance (${paiseINR(dashPaise)})`; return; }
-  const before = dashPaise;
-  debitDash(n);
-  const e = postEntry(from, `Transfer to ${to.id}`, n, 0);
-  postEntry(to, `Transfer from ${from.id}`, 0, n);
-  audit(`transfer ${fmtINR(n)} ${from.id}→${to.id}`); refreshAccounts();
-  document.getElementById('send-bal').textContent = from.balance;
-  animatePaise(document.getElementById('send-dash-bal'), before, dashPaise);
-  sendCutPaise += before - dashPaise;
-  document.getElementById('send-dash-cut').textContent = '−' + paiseINR(sendCutPaise);
-  document.getElementById('send-amt').value = '';
-  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref} · dashboard now ${paiseINR(dashPaise)}`;
 }
 /* ---- send money from the dashboard balance to a saved account ---- */
 /* Kept in paise as a BigInt — the dashboard total is too large for a plain Number */
@@ -1106,19 +1053,20 @@ function openDashSend(){
     <div class="saved-list">${list || '<div class="send-msg">No saved accounts yet — add one from Accounts.</div>'}</div>`;
   document.getElementById('modal-backdrop').classList.add('show');
 }
-function openDashSendTo(i){
+function openDashSendTo(i, fromCard){
   const a = accounts[i];
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv"><span>From</span><span>Dashboard balance</span></div>
-    <div class="kv"><span>Available</span><span class="mono" id="dash-send-bal">${paiseINR(dashPaise)}</span></div>
+    <div class="kv"><span>Available balance</span><span class="mono" id="dash-send-bal" style="font-size:18px;font-weight:600;">${paiseINR(dashPaise)}</span></div>
+    <div class="kv"><span>Calculation</span><span class="mono" id="dash-send-calc">—</span></div>
+    <div class="kv"><span>From</span><span>Main dashboard balance</span></div>
     <div class="kv"><span>To</span><span>${esc(a.name)} · ${esc(a.holder)}</span></div>
     <div class="kv"><span>Account No.</span><span class="mono">${groupAcc(a.accNo)}</span></div>
     <div class="kv" style="margin-bottom:14px;"><span>IFSC</span><span>${esc(a.ifsc)}</span></div>
     <div class="send-field"><label>Amount (₹) — e.g. 50000, 2.5L, 10cr</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
     <div class="modal-actions">
       <button class="btn primary" onclick="submitDashSend(${i})">Send</button>
-      <button class="btn" onclick="openDashSend()">Back</button>
+      <button class="btn" onclick="${fromCard ? `openAccountModal(${i})` : 'openDashSend()'}">Back</button>
     </div>
     <div class="send-msg" id="send-msg"></div>`;
   const amt = document.getElementById('send-amt');
@@ -1144,6 +1092,7 @@ function submitDashSend(i){
   audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
   refreshAccounts();
   animatePaise(document.getElementById('dash-send-bal'), before, dashPaise);
+  document.getElementById('dash-send-calc').textContent = `${paiseINR(before)} − ${paiseINR(paise)} = ${paiseINR(dashPaise)}`;
   document.getElementById('send-amt').value = '';
   msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref} · simulated, no real funds moved`;
 }
