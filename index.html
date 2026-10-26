@@ -502,10 +502,9 @@
       <div class="hero card">
         <div>
           <div class="label">Total Balance (INR) <span class="debit-flag">All entries debited</span></div>
-          <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span> <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
-          <div class="words" id="dash-exact"></div>
+          <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span></div>
           <div class="words" id="dash-sent" style="color:var(--red);"></div>
-          <div class="words" id="dash-words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
+          <div class="words" id="dash-words">In words: One hundred thirty-seven crore seventy-four lakh ninety thousand seven hundred ninety-four rupees only.</div>
         </div>
         <div class="hero-actions">
           <button class="btn primary" onclick="openDashSend()">↗ Send</button>
@@ -787,7 +786,7 @@ const statDetails = {
   "stat-debit": {title:"Total Debited", rows:[["Total debited","₹39,00,00,000"],["Share of transactions","8 of 8 (100%)"],["Largest single debit","₹10,00,00,000 · 08 Jan"],["Smallest single debit","₹1,00,00,000 · 09 Mar"],["Note","No credit entries in this period"]]},
   "stat-pending": {title:"Pending Transactions", rows:[["Count","4"],["Share of total","50.0%"],["Value held","₹13,00,00,000"],["Oldest pending","Client Settlement · 27 Jan"],["Reason","Awaiting bank confirmation or batch run"]]},
   "stat-failed": {title:"Failed Transactions", rows:[["Count","1"],["Share of total","12.5%"],["Value affected","₹6,00,00,000"],["Reference","TX-90199-D"],["Reason","Bank returned: invalid IFSC"]]},
-  "send": {title:"Send funds", rows:[["Status","Demo action — no funds move"],["Available balance","₹1,37,74,90,794 Cr"],["Default source","Operating / 0301"],["Approval required","Yes, 2 signatories"]]},
+  "send": {title:"Send funds", rows:[["Status","Demo action — no funds move"],["Available balance","₹1,37,74,90,794"],["Default source","Operating / 0301"],["Approval required","Yes, 2 signatories"]]},
   "receive": {title:"Receive funds", rows:[["Status","Demo action — no funds move"],["Default destination","Client Escrow / 0142"],["Supported channels","NEFT, RTGS, IMPS"],["Reference format","TX-XXXXX-X"]]},
 };
 
@@ -1026,7 +1025,7 @@ function submitSend(i){
   const msg = document.getElementById('send-msg');
   const problem = sendProblem(from, to, n);
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
-  if(BigInt(Math.round(n * 100)) > dashPaise){ msg.className = 'send-msg err'; msg.textContent = `✗ exceeds dashboard balance (${dashCrText()} Cr)`; return; }
+  if(BigInt(Math.round(n * 100)) > dashPaise){ msg.className = 'send-msg err'; msg.textContent = `✗ exceeds dashboard balance (${paiseINR(dashPaise)})`; return; }
   const before = dashPaise;
   debitDash(n);
   const e = postEntry(from, `Transfer to ${to.id}`, n, 0);
@@ -1042,8 +1041,8 @@ function submitSend(i){
 /* ---- send money from the dashboard balance to a saved account ---- */
 /* Kept in paise as a BigInt — the dashboard total is too large for a plain Number */
 /* Saved in this browser so sends stay deducted after a reload */
-const DASH_KEY = 'core-dash-balance-v1';
-let dashPaise = 1377490794n * 10000000n * 100n, dashSentPaise = 0n, dashLastPaise = 0n;
+const DASH_KEY = 'core-dash-balance-v2';
+let dashPaise = 1377490794n * 100n, dashSentPaise = 0n, dashLastPaise = 0n;
 try {
   const saved = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
   if(saved){ dashPaise = BigInt(saved.bal); dashSentPaise = BigInt(saved.sent); dashLastPaise = BigInt(saved.last); }
@@ -1058,11 +1057,6 @@ function debitDash(n){
   dashPaise -= p; dashSentPaise += p; dashLastPaise = p;
   try { localStorage.setItem(DASH_KEY, JSON.stringify({bal:String(dashPaise), sent:String(dashSentPaise), last:String(dashLastPaise)})); } catch(e){}
   renderDashBalance();
-}
-function dashCrText(){
-  const cr = dashPaise / 1000000000n, rem = dashPaise % 1000000000n;
-  const frac = rem ? '.' + String(rem * 100n / 1000000000n).padStart(2,'0') : '';
-  return '₹' + cr.toLocaleString('en-IN') + (frac === '.00' ? '' : frac);
 }
 function numberWords(n){
   const ones = ['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
@@ -1080,14 +1074,23 @@ function numberWords(n){
   while(n > 0n){ const chunk = Number(n % 1000n); if(chunk) parts.unshift(under1000(chunk) + (scales[i] ? ' ' + scales[i] : '')); n /= 1000n; i++; }
   return parts.join(' ');
 }
+/* Indian numbering: crore, lakh, thousand */
+function indianWords(n){
+  if(n === 0n) return 'zero';
+  const parts = [], crore = n / 10000000n; n %= 10000000n;
+  if(crore) parts.push((crore >= 100n ? indianWords(crore) : numberWords(crore)) + ' crore');
+  const lakh = n / 100000n; n %= 100000n;
+  if(lakh) parts.push(numberWords(lakh) + ' lakh');
+  if(n) parts.push(numberWords(n));
+  return parts.join(' ');
+}
 function renderDashBalance(){
-  document.getElementById('dash-amount').textContent = dashCrText();
-  document.getElementById('dash-exact').textContent = 'Exact: ' + paiseINR(dashPaise);
+  document.getElementById('dash-amount').textContent = paiseINR(dashPaise);
   document.getElementById('dash-sent').textContent = dashSentPaise
     ? `Last sent: −${paiseINR(dashLastPaise)} · Total sent: −${paiseINR(dashSentPaise)}` : '';
-  const w = numberWords(dashPaise / 1000000000n);
-  document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' crore only.';
-  statDetails.send.rows[1][1] = dashCrText() + ' Cr';
+  const w = indianWords(dashPaise / 100n), ps = Number(dashPaise % 100n);
+  document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' rupees' + (ps ? ' and ' + indianWords(BigInt(ps)) + ' paise' : '') + ' only.';
+  statDetails.send.rows[1][1] = paiseINR(dashPaise);
 }
 function openDashSend(){
   const list = accounts.map((a,i)=>{
@@ -1099,7 +1102,7 @@ function openDashSend(){
   }).join('');
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · choose a saved account</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="kv" style="margin-bottom:14px;"><span>From</span><span>Dashboard balance · ${dashCrText()} Cr</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>From</span><span>Dashboard balance · ${paiseINR(dashPaise)}</span></div>
     <div class="saved-list">${list || '<div class="send-msg">No saved accounts yet — add one from Accounts.</div>'}</div>`;
   document.getElementById('modal-backdrop').classList.add('show');
 }
@@ -1131,7 +1134,7 @@ function submitDashSend(i){
   if(to.status === 'Closed') problem = `${to.id} is closed`;
   else if(to.frozen) problem = `${to.id} is frozen`;
   else if(!(n > 0)) problem = 'enter a valid amount';
-  else if(paise > dashPaise) problem = `insufficient funds (available ${dashCrText()} Cr)`;
+  else if(paise > dashPaise) problem = `insufficient funds (available ${paiseINR(dashPaise)})`;
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
   const before = dashPaise;
   debitDash(n);
@@ -1455,7 +1458,7 @@ const HANDLERS = {
     if(m === 'IMPS' && n > 500000) return out('error: IMPS maximum is ₹5,00,000 — use NEFT or RTGS', 'err');
     if(n > a_limit(from)) return out(`error: exceeds daily limit of ${fmtINR(from.limit)}`, 'err');
     if(n > parseINR(from.balance)) return out(`error: insufficient funds (available ${from.balance})`, 'err');
-    if(BigInt(Math.round(n * 100)) > dashPaise) return out(`error: exceeds dashboard balance (${dashCrText()} Cr)`, 'err');
+    if(BigInt(Math.round(n * 100)) > dashPaise) return out(`error: exceeds dashboard balance (${paiseINR(dashPaise)})`, 'err');
     debitDash(n);
     const e = postEntry(from, `${m} to ${to.id}`, n, 0);
     postEntry(to, `${m} from ${from.id}`, 0, n);
