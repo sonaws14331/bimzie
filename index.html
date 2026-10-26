@@ -503,6 +503,8 @@
         <div>
           <div class="label">Total Balance (INR) <span class="debit-flag">All entries debited</span></div>
           <div class="amount"><span id="dash-amount">₹1,37,74,90,794</span> <span style="font-size:20px;color:var(--text-mid);font-weight:500;">Cr</span></div>
+          <div class="words" id="dash-exact"></div>
+          <div class="words" id="dash-sent" style="color:var(--red);"></div>
           <div class="words" id="dash-words">In words: One billion three hundred seventy-seven million four hundred ninety thousand seven hundred ninety-four crore only.</div>
         </div>
         <div class="hero-actions">
@@ -767,6 +769,8 @@ const accounts = [
   {id:"ACC-0044", name:"Fee Collection",          type:"Revenue",   balance:"₹98,44,120", opened:"20 Jun 2022", status:"Active"},
   {id:"ACC-0500", name:"Reconciliation Suspense", type:"Suspense",  balance:"₹2,00,00,000", opened:"14 Sep 2023", status:"Under review"},
   {id:"ACC-0600", name:"Reserve Account",         type:"Reserve",   balance:"₹58,20,00,000", opened:"14 Sep 2023", status:"Active"},
+  {id:"ACC-0701", name:"SHREE GURU GANGADHARA SMS TRUST", type:"Savings", balance:"₹0", opened:"26 Oct 2026", status:"Active",
+   accNo:"50200084015808", holder:"Shree shiva jogy", ifsc:"HDFC0008424", branch:"HDFC Bank, Sadasivapet Branch"},
 ];
 
 const clients = [
@@ -799,6 +803,7 @@ function handleLogin(){
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderAll();
+  renderDashBalance();
   initFx();
 }
 document.getElementById('pword').addEventListener('keydown', e=>{ if(e.key==='Enter') handleLogin(); });
@@ -976,7 +981,9 @@ function openSendModal(i){
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-head"><h3>Send money · ${a.id}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="kv"><span>From</span><span>${esc(a.name)} · ${maskAcc(a.accNo)}</span></div>
-    <div class="kv" style="margin-bottom:14px;"><span>Available balance</span><span id="send-bal">${a.balance}</span></div>
+    <div class="kv"><span>Available balance</span><span id="send-bal">${a.balance}</span></div>
+    <div class="kv"><span>Main dashboard balance</span><span class="mono" id="send-dash-bal">${paiseINR(dashPaise)}</span></div>
+    <div class="kv" style="margin-bottom:14px;"><span>Deducted in this window</span><span class="mono" id="send-dash-cut" style="color:var(--red);">₹0</span></div>
     <div class="send-field"><label>To account</label><select id="send-to">${others}</select></div>
     <div class="send-field"><label>Amount (₹)</label><input id="send-amt" inputmode="decimal" autocomplete="off" placeholder="0"></div>
     <div class="modal-actions">
@@ -985,7 +992,23 @@ function openSendModal(i){
     </div>
     <div class="send-msg" id="send-msg"></div>`;
   document.getElementById('modal-backdrop').classList.add('show');
-  document.getElementById('send-amt').focus();
+  const amt = document.getElementById('send-amt');
+  amt.addEventListener('keydown', e=>{ if(e.key === 'Enter') submitSend(i); });
+  amt.focus();
+  sendCutPaise = 0n;
+}
+/* Counts a balance figure down to its new value so the deduction is visible in the popup */
+let sendCutPaise = 0n;
+function animatePaise(el, fromP, toP, ms = 900){
+  if(!el) return;
+  const start = performance.now(), diff = fromP - toP;
+  el.style.color = 'var(--red)';
+  (function tick(now){
+    if(!el.isConnected) return;
+    const t = Math.min(1, (now - start) / ms), eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = paiseINR(fromP - diff * BigInt(Math.round(eased * 1000)) / 1000n);
+    if(t < 1) requestAnimationFrame(tick); else { el.textContent = paiseINR(toP); setTimeout(()=>{ el.style.color = ''; }, 600); }
+  })(start);
 }
 function sendProblem(from, to, n){
   if(!to) return 'choose a destination account';
@@ -1003,16 +1026,39 @@ function submitSend(i){
   const msg = document.getElementById('send-msg');
   const problem = sendProblem(from, to, n);
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
+  if(BigInt(Math.round(n * 100)) > dashPaise){ msg.className = 'send-msg err'; msg.textContent = `✗ exceeds dashboard balance (${dashCrText()} Cr)`; return; }
+  const before = dashPaise;
+  debitDash(n);
   const e = postEntry(from, `Transfer to ${to.id}`, n, 0);
   postEntry(to, `Transfer from ${from.id}`, 0, n);
   audit(`transfer ${fmtINR(n)} ${from.id}→${to.id}`); refreshAccounts();
   document.getElementById('send-bal').textContent = from.balance;
+  animatePaise(document.getElementById('send-dash-bal'), before, dashPaise);
+  sendCutPaise += before - dashPaise;
+  document.getElementById('send-dash-cut').textContent = '−' + paiseINR(sendCutPaise);
   document.getElementById('send-amt').value = '';
-  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref}`;
+  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} · ref ${e.ref} · dashboard now ${paiseINR(dashPaise)}`;
 }
 /* ---- send money from the dashboard balance to a saved account ---- */
 /* Kept in paise as a BigInt — the dashboard total is too large for a plain Number */
-let dashPaise = 1377490794n * 10000000n * 100n;
+/* Saved in this browser so sends stay deducted after a reload */
+const DASH_KEY = 'core-dash-balance-v1';
+let dashPaise = 1377490794n * 10000000n * 100n, dashSentPaise = 0n, dashLastPaise = 0n;
+try {
+  const saved = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
+  if(saved){ dashPaise = BigInt(saved.bal); dashSentPaise = BigInt(saved.sent); dashLastPaise = BigInt(saved.last); }
+} catch(e){}
+function paiseINR(p){
+  const r = p / 100n, ps = p % 100n;
+  return '₹' + r.toLocaleString('en-IN') + (ps ? '.' + String(ps).padStart(2,'0') : '');
+}
+/* Every outgoing send reduces the dashboard balance by the same amount */
+function debitDash(n){
+  const p = BigInt(Math.round(n * 100));
+  dashPaise -= p; dashSentPaise += p; dashLastPaise = p;
+  try { localStorage.setItem(DASH_KEY, JSON.stringify({bal:String(dashPaise), sent:String(dashSentPaise), last:String(dashLastPaise)})); } catch(e){}
+  renderDashBalance();
+}
 function dashCrText(){
   const cr = dashPaise / 1000000000n, rem = dashPaise % 1000000000n;
   const frac = rem ? '.' + String(rem * 100n / 1000000000n).padStart(2,'0') : '';
@@ -1036,6 +1082,9 @@ function numberWords(n){
 }
 function renderDashBalance(){
   document.getElementById('dash-amount').textContent = dashCrText();
+  document.getElementById('dash-exact').textContent = 'Exact: ' + paiseINR(dashPaise);
+  document.getElementById('dash-sent').textContent = dashSentPaise
+    ? `Last sent: −${paiseINR(dashLastPaise)} · Total sent: −${paiseINR(dashSentPaise)}` : '';
   const w = numberWords(dashPaise / 1000000000n);
   document.getElementById('dash-words').textContent = 'In words: ' + w.charAt(0).toUpperCase() + w.slice(1) + ' crore only.';
   statDetails.send.rows[1][1] = dashCrText() + ' Cr';
@@ -1084,15 +1133,15 @@ function submitDashSend(i){
   else if(!(n > 0)) problem = 'enter a valid amount';
   else if(paise > dashPaise) problem = `insufficient funds (available ${dashCrText()} Cr)`;
   if(problem){ msg.className = 'send-msg err'; msg.textContent = '✗ ' + problem; return; }
-  dashPaise -= paise;
+  debitDash(n);
   const e = postEntry(to, 'Transfer from dashboard balance', 0, n);
   transactions.unshift({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
     from:"Dashboard balance", to:`${to.name} / ${to.accNo.slice(-4)}`, channel:"Internal", note:"Posted to ledger"});
   audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
-  renderDashBalance(); refreshAccounts();
+  refreshAccounts();
   document.getElementById('dash-send-bal').textContent = dashCrText() + ' Cr';
   document.getElementById('send-amt').value = '';
-  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref}`;
+  msg.className = 'send-msg ok'; msg.textContent = `✓ ${fmtINR(n)} sent to ${to.id} (${maskAcc(to.accNo)}) · ref ${e.ref} · simulated, no real funds moved`;
 }
 function openClientModal(i){ const c = clients[i]; renderModal(`${c.name} · ${c.id}`, [["Tier", c.tier],["Linked accounts", c.accounts],["KYC status", c.kyc],["Client since", c.since]]); }
 function renderModal(title, rows){
@@ -1405,9 +1454,12 @@ const HANDLERS = {
     if(m === 'IMPS' && n > 500000) return out('error: IMPS maximum is ₹5,00,000 — use NEFT or RTGS', 'err');
     if(n > a_limit(from)) return out(`error: exceeds daily limit of ${fmtINR(from.limit)}`, 'err');
     if(n > parseINR(from.balance)) return out(`error: insufficient funds (available ${from.balance})`, 'err');
+    if(BigInt(Math.round(n * 100)) > dashPaise) return out(`error: exceeds dashboard balance (${dashCrText()} Cr)`, 'err');
+    debitDash(n);
     const e = postEntry(from, `${m} to ${to.id}`, n, 0);
     postEntry(to, `${m} from ${from.id}`, 0, n);
     out(`✓ ${fmtINR(n)} sent ${from.id} → ${to.id} via ${m}  ref ${e.ref}`, 'ok');
+    out(`  dashboard balance −${fmtINR(n)} → ${paiseINR(dashPaise)}`, 'dim');
     out(`  ${from.id} balance ${from.balance}  ·  ${to.id} balance ${to.balance}`, 'dim');
     audit(`transfer ${fmtINR(n)} ${from.id}→${to.id} ${m}`); refreshAccounts();
   },
