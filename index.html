@@ -516,7 +516,7 @@
       <div class="stat-grid">
         <button class="stat-card card" onclick="openModal('stat-total')">
           <div class="stat-ic" style="background:rgba(91,147,255,0.15);color:var(--blue);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17 9 11l4 4 8-8"/><path d="M15 7h6v6"/></svg></div>
-          <div class="lbl">Total Transactions</div><div class="val" id="st-total">8</div><div class="sub">Jan – May 2026</div>
+          <div class="lbl">Total Transactions</div><div class="val" id="st-total">8</div><div class="sub">Jan – Oct 2026</div>
         </button>
         <button class="stat-card card" onclick="openModal('stat-debit')">
           <div class="stat-ic" style="background:var(--red-dim);color:var(--red);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M12 19l-5-5M12 19l5-5"/></svg></div>
@@ -624,7 +624,7 @@
 
     <!-- ---- TRANSACTIONS ---- -->
     <div class="view" id="view-transactions">
-      <div class="page-head"><h2>Transactions</h2><p>Every ledger entry recorded on the test environment, January – May 2026. All entries are debits. Click a row for its full structure.</p></div>
+      <div class="page-head"><h2>Transactions</h2><p>Every ledger entry recorded on the test environment, January – October 2026. All entries are debits. Click a row for its full structure.</p></div>
       <div class="card table-wrap">
         <table>
           <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount (INR)</th><th>Status</th><th>Reference</th></tr></thead>
@@ -749,8 +749,10 @@
 
 <script>
 /* ---------------- DATA ---------------- */
-/* All entries are debits, spread across January–May 2026 */
+/* All entries are debits, spread across January–October 2026 */
 const transactions = [
+  {date:"27 Oct 2026", desc:"Transfer to SHREE GURU GANGADHARA SMS TRUST", amount:"₹50", status:"completed", ref:"TX-90410-J", from:"Operating / 0301", to:"SHREE GURU GANGADHARA SMS TRUST / 5808", channel:"IMPS", note:"Posted to ledger"},
+  {date:"13 Oct 2026", desc:"Transfer to SHREE GURU GANGADHARA SMS TRUST", amount:"₹1,000", status:"completed", ref:"TX-90388-I", from:"Operating / 0301", to:"SHREE GURU GANGADHARA SMS TRUST / 5808", channel:"IMPS", note:"Posted to ledger"},
   {date:"08 Jan 2026", desc:"Vendor Settlement",     amount:"₹10,00,00,000", status:"completed", ref:"TX-90112-A", from:"Operating / 0301", to:"Vendor / 7788", channel:"NEFT", note:"Posted to ledger"},
   {date:"27 Jan 2026", desc:"Client Settlement",     amount:"₹4,00,00,000",  status:"pending",   ref:"TX-90140-B", from:"Settlement Pool / 0009", to:"Partner Bank / 5521", channel:"RTGS", note:"Queued for batch run"},
   {date:"14 Feb 2026", desc:"Annual Service Charge", amount:"₹2,00,00,000",  status:"completed", ref:"TX-90178-C", from:"Operating / 0301", to:"Fee Collection / 0044", channel:"Internal", note:"Posted to ledger"},
