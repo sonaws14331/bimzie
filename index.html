@@ -835,12 +835,12 @@ function renderAll(){
   set('st-failed', transactions.filter(t=>t.status === 'failed').length);
   document.getElementById('recent-tx-body').innerHTML = transactions.slice(0,5).map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td>
+      <td>${t.date}</td><td>${esc(t.desc)}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td>
     </tr>`).join('');
 
   document.getElementById('all-tx-body').innerHTML = transactions.map((t,i)=>`
     <tr class="rowbtn" onclick="openTxModal(${i})">
-      <td>${t.date}</td><td>${t.desc}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
+      <td>${t.date}</td><td>${esc(t.desc)}</td><td><span class="badge debit">Debit</span></td><td class="mono amt-debit">${t.amount}</td><td>${badge(t.status)}</td><td class="mono" style="color:var(--text-low);">${t.ref}</td>
     </tr>`).join('');
 
   document.getElementById('accounts-grid').innerHTML = accounts.map((a,i)=>`
@@ -966,9 +966,9 @@ function treeHTML(nodes){
 function openModal(key){ const d = statDetails[key]; renderModal(d.title, d.rows); }
 function openTxModal(i){
   const t = transactions[i];
-  renderModal(`${t.desc} · ${t.ref}`, [
+  renderModal(`${esc(t.desc)} · ${t.ref}`, [
     ["Date", t.date],["Type","Debit"],["Amount", t.amount],["Status", statusLabel(t.status)],
-    ["From", t.from],["To", t.to],["Channel", t.channel],["Note", t.note],
+    ["From", esc(t.from)],["To", esc(t.to)],["Channel", t.channel],["Note", t.note],
   ]);
 }
 function openAccountModal(i){
@@ -1000,6 +1000,17 @@ try {
   const saved = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
   if(saved){ dashPaise = BigInt(saved.bal); dashSentPaise = BigInt(saved.sent); dashLastPaise = BigInt(saved.last); }
 } catch(e){}
+/* Sent transfers are saved too, so the transaction history keeps them after a reload */
+const TX_KEY = 'core-sent-transactions-v1';
+let sentTx = [];
+try { sentTx = JSON.parse(localStorage.getItem(TX_KEY) || '[]'); } catch(e){}
+transactions.unshift(...sentTx);
+function recordTx(t){
+  sentTx.unshift(t);
+  transactions.unshift(t);
+  try { localStorage.setItem(TX_KEY, JSON.stringify(sentTx)); } catch(e){}
+  renderAll();
+}
 function paiseINR(p){
   const r = p / 100n, ps = p % 100n;
   return '₹' + r.toLocaleString('en-IN') + (ps ? '.' + String(ps).padStart(2,'0') : '');
@@ -1095,7 +1106,7 @@ function submitDashSend(i){
   const before = dashPaise;
   debitDash(n);
   const e = postEntry(to, 'Transfer from dashboard balance', 0, n);
-  transactions.unshift({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
+  recordTx({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
     from:"Dashboard balance", to:`${to.name} / ${to.accNo.slice(-4)}`, channel:"Internal", note:"Posted to ledger"});
   audit(`transfer ${fmtINR(n)} dashboard→${to.id}`);
   refreshAccounts();
@@ -1420,6 +1431,8 @@ const HANDLERS = {
     debitDash(n);
     const e = postEntry(from, `${m} to ${to.id}`, n, 0);
     postEntry(to, `${m} from ${from.id}`, 0, n);
+    recordTx({date:todayStr(), desc:`Transfer to ${to.name}`, amount:fmtINR(n), status:"completed", ref:e.ref,
+      from:`${from.name} / ${from.accNo.slice(-4)}`, to:`${to.name} / ${to.accNo.slice(-4)}`, channel:m === 'INTERNAL' ? 'Internal' : m, note:"Posted to ledger"});
     out(`✓ ${fmtINR(n)} sent ${from.id} → ${to.id} via ${m}  ref ${e.ref}`, 'ok');
     out(`  dashboard balance −${fmtINR(n)} → ${paiseINR(dashPaise)}`, 'dim');
     out(`  ${from.id} balance ${from.balance}  ·  ${to.id} balance ${to.balance}`, 'dim');
